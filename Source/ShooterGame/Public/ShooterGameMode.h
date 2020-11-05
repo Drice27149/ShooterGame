@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "TimerManager.h"
+#include "Engine/EngineTypes.h"
 #include "ShooterGameMode.generated.h"
 
 class AShooterCharacter;
@@ -20,8 +21,6 @@ class AShooterGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
     
-    
-
 public:
 	AShooterGameMode();
     
