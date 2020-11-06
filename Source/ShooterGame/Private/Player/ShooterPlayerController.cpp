@@ -39,3 +39,26 @@ void AShooterPlayerController::ClientRecieveMessage_Implementation(const FString
         MyShooterHUD->NotifyMatchMessage(Message,MessageDuration);
     }
 }
+
+void AShooterPlayerController::ClientMatchStart_Implementation()
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        FString StartMessage = FString::Printf(TEXT("Game Start"));
+        float Duration = 3.0f;
+        MyShooterHUD->NotifyMatchMessage(StartMessage,Duration);
+    }
+}
+
+void AShooterPlayerController::ClientMatchEnd_Implementation()
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        FString EndMessage = FString::Printf(TEXT("Game End"));
+        float Duration = 3.0f;
+        MyShooterHUD->NotifyMatchMessage(EndMessage,Duration);
+    }
+}
+

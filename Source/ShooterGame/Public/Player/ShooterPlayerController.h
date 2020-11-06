@@ -17,6 +17,12 @@ class SHOOTERGAME_API AShooterPlayerController : public APlayerController
 
 public:
     UFUNCTION(Reliable, Client)
+    void ClientMatchStart();
+
+    UFUNCTION(Reliable, Client)
+    void ClientMatchEnd();
+
+    UFUNCTION(Reliable, Client)
     void ClientChangeScore(const FString& NewScore);
 
     UFUNCTION(Reliable, Client)

@@ -39,16 +39,36 @@ void AShooterGameMode::HoldingMatch()
     StateRemainTime--;
     if(StateRemainTime==0)
     { 
-        if(MatchState==EMatchState::BeforeMatch) // change to next state
+        if(MatchState==EMatchState::BeforeMatch) // match start
         {
             StateRemainTime = MatchDuration;
             MatchState = EMatchState::DuringMatch;
             GetWorldTimerManager().SetTimer(MatchTimer, this, &AShooterGameMode::HoldingMatch, OneSecond, false);
+            
+            //notify all client match start
+            for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+            {
+                AShooterPlayerController* MyController = Cast<AShooterPlayerController>(*It);
+                if(MyController != NULL)
+                {
+                    MyController->ClientMatchStart();
+                }
+            }
         }
         else // match was ended
         {
             StateRemainTime = 0;
             MatchState = EMatchState::AfterMatch;
+            
+            //notify all client match end
+            for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+            {
+                AShooterPlayerController* MyController = Cast<AShooterPlayerController>(*It);
+                if(MyController != NULL)
+                {
+                    MyController->ClientMatchEnd();
+                }
+            }
         }
     }
     else
@@ -94,7 +114,7 @@ void AShooterGameMode::HandleHitScore(AShooterCharacter* ShooterPawn,float Score
             if(MyController != NULL)
             {
                 MyController->ClientChangeScore(FString::Printf(TEXT("%.2f"),NewScore));
-                float ScoreMessageDuration = 2.0f;
+                float ScoreMessageDuration = 1.0f;
                 MyController->ClientRecieveMessage(FString::Printf(TEXT("+ %.2f"),Score),ScoreMessageDuration);
             }
         }

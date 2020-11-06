@@ -27,6 +27,9 @@ public:
     
     void SetRemainTimeText(FString RemainTime);
     
+    UFUNCTION(BlueprintImplementableEvent, Category = "InfoWidget")
+    void OnGetMessage(const FString& Message);
+    
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ShooterName = NULL;
     

@@ -30,6 +30,10 @@ public:
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
+    
+    /** Function for beginning weapon fire.*/
+    UFUNCTION(BlueprintCallable, Category = "Gameplay")
+	void StartFire();
 
 protected:
 
@@ -41,9 +45,6 @@ protected:
 
 	/** If true, we are in the process of firing projectiles. */
 	bool bIsFiringWeapon;
-
-	/** Function for beginning weapon fire.*/
-	void StartFire();
 
 	/** Function for ending weapon fire. Once this is called, the player can use StartFire again.*/
 	void StopFire();
