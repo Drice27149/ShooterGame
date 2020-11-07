@@ -19,27 +19,17 @@ class SHOOTERGAME_API UMatchInfoWidget : public UUserWidget
 public:    
     virtual void NativeConstruct() override;
     
-    void SetNameText(FString Name);
+    /** notify name changed to update name display**/
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInfo")
+    void OnNameChange();
     
-    void SetScoreText(FString Score);
+    /** notify score changed to update score display**/
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInfo")
+    void OnScoreChange();
     
-    void SetMessageText(FString Message);
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInfo")
+    void OnTimerChange(const FString& NewTime);
     
-    void SetRemainTimeText(FString RemainTime);
-    
-    UFUNCTION(BlueprintImplementableEvent, Category = "InfoWidget")
-    void OnGetMessage(const FString& Message);
-    
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* ShooterName = NULL;
-    
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* ShooterScore = NULL;
-    
-    /** message recieved from server **/
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* MatchMessage = NULL;
-    
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* MatchRemainTime = NULL;
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInfo")
+    void OnRecieveServerMessage(const FString& Message);
 };

@@ -23,14 +23,11 @@ public:
     void ClientMatchEnd();
 
     UFUNCTION(Reliable, Client)
-    void ClientChangeScore(const FString& NewScore);
+    void ClientScoreChange();
 
     UFUNCTION(Reliable, Client)
-    void ClientChangeName(const FString& NewName);
+    void ClientTimeChange(const int& NewTime);
 
     UFUNCTION(Reliable, Client)
-    void ClientChangeTime(const FString& NewTime);
-
-    UFUNCTION(Reliable, Client)
-    void ClientRecieveMessage(const FString& Message, float MessageDuration);
+    void ClientRecieveMessage(const FString& Message);
 };

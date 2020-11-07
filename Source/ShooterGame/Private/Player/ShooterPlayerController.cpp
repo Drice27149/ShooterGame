@@ -4,39 +4,30 @@
 #include "UI/ShooterHUD.h"
 #include "Containers/UnrealString.h"
 
-void AShooterPlayerController::ClientChangeScore_Implementation(const FString& NewScore)
+void AShooterPlayerController::ClientScoreChange_Implementation()
 {
     AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
     if(MyShooterHUD != NULL)
     {
-        MyShooterHUD->NotifyScoreChange(NewScore);
+        MyShooterHUD->NotifyScoreChange();
     }
 }
 
-void AShooterPlayerController::ClientChangeName_Implementation(const FString& NewName)
+void AShooterPlayerController::ClientTimeChange_Implementation(const int& NewTime)
 {
     AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
     if(MyShooterHUD != NULL)
     {
-        MyShooterHUD->NotifyPlayerNameChange(NewName);
+        MyShooterHUD->NotifyTimeChange(FString::Printf(TEXT("%d"),NewTime));
     }
 }
 
-void AShooterPlayerController::ClientChangeTime_Implementation(const FString& NewTime)
+void AShooterPlayerController::ClientRecieveMessage_Implementation(const FString& Message)
 {
     AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
     if(MyShooterHUD != NULL)
     {
-        MyShooterHUD->NotifyTimeChange(NewTime);
-    }
-}
-
-void AShooterPlayerController::ClientRecieveMessage_Implementation(const FString& Message, float MessageDuration)
-{
-    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
-    if(MyShooterHUD != NULL)
-    {
-        MyShooterHUD->NotifyMatchMessage(Message,MessageDuration);
+        MyShooterHUD->NotifyMatchMessage(Message);
     }
 }
 
@@ -46,8 +37,7 @@ void AShooterPlayerController::ClientMatchStart_Implementation()
     if(MyShooterHUD != NULL)
     {
         FString StartMessage = FString::Printf(TEXT("Game Start"));
-        float Duration = 3.0f;
-        MyShooterHUD->NotifyMatchMessage(StartMessage,Duration);
+        MyShooterHUD->NotifyMatchMessage(StartMessage);
     }
 }
 
@@ -57,8 +47,7 @@ void AShooterPlayerController::ClientMatchEnd_Implementation()
     if(MyShooterHUD != NULL)
     {
         FString EndMessage = FString::Printf(TEXT("Game End"));
-        float Duration = 3.0f;
-        MyShooterHUD->NotifyMatchMessage(EndMessage,Duration);
+        MyShooterHUD->NotifyMatchMessage(EndMessage);
     }
 }
 

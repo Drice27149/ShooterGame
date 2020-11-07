@@ -11,14 +11,16 @@
 #include "Containers/UnrealString.h"
 #include "Engine/EngineTypes.h"
 #include "Player/ShooterPlayerController.h"
+#include "Player/ShooterPlayerState.h"
 
 AShooterGameMode::AShooterGameMode()
 {
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPersonCPP/Blueprints/ThirdPersonCharacter"));
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Blueprints/Player/BPShooterPawn"));
     DefaultPawnClass = PlayerPawnBPClass.Class;
     
     HUDClass = AShooterHUD::StaticClass();
 	PlayerControllerClass = AShooterPlayerController::StaticClass();
+    PlayerStateClass = AShooterPlayerState::StaticClass();
 }
 
 void AShooterGameMode::StartPlay()
@@ -39,8 +41,9 @@ void AShooterGameMode::HoldingMatch()
     StateRemainTime--;
     if(StateRemainTime==0)
     { 
-        if(MatchState==EMatchState::BeforeMatch) // match start
+        if(MatchState==EMatchState::BeforeMatch) 
         {
+            // match start
             StateRemainTime = MatchDuration;
             MatchState = EMatchState::DuringMatch;
             GetWorldTimerManager().SetTimer(MatchTimer, this, &AShooterGameMode::HoldingMatch, OneSecond, false);
@@ -55,8 +58,9 @@ void AShooterGameMode::HoldingMatch()
                 }
             }
         }
-        else // match was ended
+        else 
         {
+            // match end
             StateRemainTime = 0;
             MatchState = EMatchState::AfterMatch;
             
@@ -76,13 +80,13 @@ void AShooterGameMode::HoldingMatch()
         GetWorldTimerManager().SetTimer(MatchTimer, this, &AShooterGameMode::HoldingMatch, OneSecond, false);
     }
     
+    // notify all client match timer change
     for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
     {
         AShooterPlayerController* MyController = Cast<AShooterPlayerController>(*It);
         if(MyController != NULL)
         {
-            FString NewTime = FString::Printf(TEXT("%d"),StateRemainTime);
-            MyController->ClientChangeTime(NewTime);
+            MyController->ClientTimeChange(StateRemainTime);
         }
     }
 }
@@ -99,10 +103,6 @@ void AShooterGameMode::HandleHitScore(AShooterCharacter* ShooterPawn,float Score
         float Distance = (CenterLocation-HitLocation).Size();
         float FullScore = 10.0f;
         float Score = (ScoreRadius-Distance)/ScoreRadius*FullScore;
-        if(Score<0)
-        {
-            Score = 0;
-        }
         //add the hit score
         APlayerState* PlayerState = Cast<APlayerState>(ShooterPawn->GetPlayerState());
         if (PlayerState != NULL)
@@ -113,9 +113,7 @@ void AShooterGameMode::HandleHitScore(AShooterCharacter* ShooterPawn,float Score
             AShooterPlayerController* MyController = Cast<AShooterPlayerController>(ShooterPawn->GetController());
             if(MyController != NULL)
             {
-                MyController->ClientChangeScore(FString::Printf(TEXT("%.2f"),NewScore));
-                float ScoreMessageDuration = 1.0f;
-                MyController->ClientRecieveMessage(FString::Printf(TEXT("+ %.2f"),Score),ScoreMessageDuration);
+                MyController->ClientScoreChange();
             }
         }
     }

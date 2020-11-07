@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "UI/ShooterHUD.h"
 #include "UI/MatchInfoWidget.h"
 #include "Components/TextBlock.h"
@@ -8,45 +7,57 @@
 #include "Containers/UnrealString.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Blueprint/UserWidget.h"
 
-void AShooterHUD::NotifyPlayerNameChange(FString NewName)
+AShooterHUD::AShooterHUD()
+{
+    static ConstructorHelpers::FClassFinder<UUserWidget> MyMatchInfoWidget(TEXT("/Game/Blueprints/UI/BPMatchInfoWidget"));
+    if(MyMatchInfoWidget.Class != NULL)
+    {
+        MatchInfoWidgetClass = MyMatchInfoWidget.Class;
+    }
+}
+
+void AShooterHUD::LoadMatchInfoWidget()
+{
+    if(MatchInfoWidgetClass != NULL){
+        MatchInfoWidget = CreateWidget<UMatchInfoWidget>(PlayerOwner,MatchInfoWidgetClass);
+        if(MatchInfoWidget != NULL)
+        {
+            MatchInfoWidget->AddToViewport();
+        }
+    }
+}
+
+void AShooterHUD::NotifyPlayerNameChange()
 {
     if(MatchInfoWidget != NULL)
     {
-        MatchInfoWidget->SetNameText(NewName);
+        MatchInfoWidget->OnNameChange();
     }
 }
     
-void AShooterHUD::NotifyScoreChange(FString NewScore)
+void AShooterHUD::NotifyScoreChange()
 {
     if(MatchInfoWidget != NULL)
     {
-        MatchInfoWidget->SetScoreText(NewScore);
+        MatchInfoWidget->OnScoreChange();
     }
 }
     
-void AShooterHUD::NotifyMatchMessage(FString Message,float MessageDuration)
-{
-    if(MatchInfoWidget != NULL)
-    {
-        MatchInfoWidget->SetMessageText(Message);
-        GetWorldTimerManager().ClearTimer(MessageTimer);
-        GetWorldTimerManager().SetTimer(MessageTimer, this, &AShooterHUD::ClearMatchMessage, MessageDuration, false);
-    }
-}
-
-void AShooterHUD::ClearMatchMessage()
-{
-    if(MatchInfoWidget != NULL)
-    {
-        MatchInfoWidget->SetMessageText(FString(""));
-    }
-}
-
 void AShooterHUD::NotifyTimeChange(FString NewTime)
 {
     if(MatchInfoWidget != NULL)
     {
-        MatchInfoWidget->SetRemainTimeText(NewTime);
+        MatchInfoWidget->OnTimerChange(NewTime);
+    }
+}
+    
+void AShooterHUD::NotifyMatchMessage(FString Message)
+{
+    if(MatchInfoWidget != NULL)
+    {
+       MatchInfoWidget->OnRecieveServerMessage(Message);
     }
 }

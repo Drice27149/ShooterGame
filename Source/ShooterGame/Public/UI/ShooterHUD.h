@@ -19,20 +19,25 @@ class SHOOTERGAME_API AShooterHUD : public AHUD
 	GENERATED_BODY()
 
 public:
+    
+    AShooterHUD();
+
     /** display match information during game play **/
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = MatchInfo)
     UMatchInfoWidget* MatchInfoWidget = NULL;
     
-    void NotifyPlayerNameChange(FString NewName);
+    UFUNCTION(BlueprintCallable, Category = "MatchInformation")
+    void LoadMatchInfoWidget();
     
-    void NotifyScoreChange(FString NewScore);
+    void NotifyPlayerNameChange();
     
-    void NotifyMatchMessage(FString Message,float MessageDuration);
-
-    void ClearMatchMessage();
+    void NotifyScoreChange();
+    
+    void NotifyMatchMessage(FString Message);
     
     void NotifyTimeChange(FString NewTime);
-
+    
 private:
-    FTimerHandle MessageTimer;
+
+    TSubclassOf<class UUserWidget> MatchInfoWidgetClass = NULL;
 };
