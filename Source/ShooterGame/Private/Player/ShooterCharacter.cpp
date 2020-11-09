@@ -1,7 +1,6 @@
 // Drice
 
 #include "Player/ShooterCharacter.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -9,7 +8,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
 #include "GameFramework/PlayerState.h"
-#include "Weapon/ShooterProjectile.h"
+#include "Weapon/Weapon.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AShooterCharacter
@@ -29,14 +28,9 @@ AShooterCharacter::AShooterCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
-
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
-
-	ProjectileClass = AShooterProjectile::StaticClass();
-	//Initialize fire rate
-	FireRate = 0.25f;
-	bIsFiringWeapon = false;
+    
+    // Set up Default Weapon
+    CurrentWeapon = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -49,37 +43,13 @@ void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	PlayerInputComponent->BindAxis("MoveForward", this, &AShooterCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AShooterCharacter::MoveRight);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AShooterCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AShooterCharacter::TouchStopped);
-
-	// VR headset functionality
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AShooterCharacter::OnResetVR);
-
-	// Handle firing projectiles
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AShooterCharacter::StartFire);
+	PlayerInputComponent->BindAxis("MoveForward", this, &AShooterCharacter::OnMoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AShooterCharacter::OnMoveRight);
+    
+    PlayerInputComponent->BindAction("Fire", IE_Released, this, &AShooterCharacter::OnStartFire);
 }
 
-
-void AShooterCharacter::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
-
-void AShooterCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
-{
-		Jump();
-}
-
-void AShooterCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
-{
-		StopJumping();
-}
-
-void AShooterCharacter::MoveForward(float Value)
+void AShooterCharacter::OnMoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
@@ -93,7 +63,7 @@ void AShooterCharacter::MoveForward(float Value)
 	}
 }
 
-void AShooterCharacter::MoveRight(float Value)
+void AShooterCharacter::OnMoveRight(float Value)
 {
 	if ( (Controller != NULL) && (Value != 0.0f) )
 	{
@@ -108,30 +78,36 @@ void AShooterCharacter::MoveRight(float Value)
 	}
 }
 
-void AShooterCharacter::StartFire()
+void AShooterCharacter::OnStartFire()
 {
-	if (!bIsFiringWeapon)
-	{
-		bIsFiringWeapon = true;
-		UWorld* World = GetWorld();
-		World->GetTimerManager().SetTimer(FiringTimer, this, &AShooterCharacter::StopFire, FireRate, false);
-		HandleFire();
-	}
+    if(CurrentWeapon != NULL && CurrentWeapon->CanFire())
+    {
+        ServerStartFire();
+    }
 }
 
-void AShooterCharacter::StopFire()
+void AShooterCharacter::ServerStartFire_Implementation()
 {
-	bIsFiringWeapon = false;
+    CurrentWeapon->StartFire();
+    AllClientStartFire();
 }
 
-void AShooterCharacter::HandleFire_Implementation()
+void AShooterCharacter::AllClientStartFire_Implementation()
 {
-	FVector spawnLocation = GetActorLocation() + (GetControlRotation().Vector() * 100.0f) + (GetActorUpVector() * 50.0f);
-	FRotator spawnRotation = GetControlRotation();
-
-	FActorSpawnParameters spawnParameters;
-	spawnParameters.Instigator = GetInstigator();
-	spawnParameters.Owner = this;
-
-	AShooterProjectile* spawnedProjectile = GetWorld()->SpawnActor<AShooterProjectile>(spawnLocation, spawnRotation, spawnParameters);
+    PlayWeaponFireAnimation(CurrentWeapon);
 }
+
+void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    
+    DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
+}
+
+void AShooterCharacter::OnRep_CurrentWeapon()
+{
+    UpdateWeaponMesh(CurrentWeapon);
+    PlayWeaponChangedAnimation(CurrentWeapon);
+}
+
+

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Weapon/Weapon.h"
 #include "ShooterCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -13,50 +14,41 @@ class AShooterCharacter : public ACharacter
 public:
 
 	AShooterCharacter();
+
+protected:
+
+    //handle player input
     
-    /** Function for beginning weapon fire.*/
-    UFUNCTION(BlueprintCallable, Category = "Gameplay")
-	void StartFire();
+    void OnStartFire();
+    
+	void OnMoveForward(float Value);
 
+	void OnMoveRight(float Value);
+
+private:
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
+    AWeapon* CurrentWeapon;
+
+    UFUNCTION()
+    void OnRep_CurrentWeapon();
+    
+    UFUNCTION(Reliable, Server)
+    void ServerStartFire();
+    
+    UFUNCTION(Reliable, NetMulticast)
+    void AllClientStartFire();
+    
 protected:
+    UFUNCTION(BlueprintImplementableEvent)
+    void UpdateWeaponMesh(AWeapon* MyWeapon);
 
-	UPROPERTY(EditDefaultsOnly, Category = "Gameplay|Projectile")
-		TSubclassOf<class AShooterProjectile> ProjectileClass;
+    UFUNCTION(BlueprintImplementableEvent)
+    void PlayWeaponChangedAnimation(AWeapon* MyWeapon);
 
-	/** Delay between shots in seconds. Used to control fire rate for our test projectile, but also to prevent an overflow of server functions from binding SpawnProjectile directly to input.*/
-	float FireRate;
+    UFUNCTION(BlueprintImplementableEvent)
+    void PlayWeaponFireAnimation(AWeapon* MyWeapon);
 
-	/** If true, we are in the process of firing projectiles. */
-	bool bIsFiringWeapon;
-
-	/** Function for ending weapon fire. Once this is called, the player can use StartFire again.*/
-	void StopFire();
-
-	/** Server function for spawning projectiles.*/
-	UFUNCTION(Server, Reliable)
-	void HandleFire();
-
-	/** A timer handle used for providing the fire rate delay in-between spawns.*/
-	FTimerHandle FiringTimer;
-
-	/** Resets HMD orientation in VR. */
-	void OnResetVR();
-
-	/** Called for forwards/backward input */
-	void MoveForward(float Value);
-
-	/** Called for side to side input */
-	void MoveRight(float Value);
-
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
-
-protected:
-	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	// End of APawn interface
 };
+
 
