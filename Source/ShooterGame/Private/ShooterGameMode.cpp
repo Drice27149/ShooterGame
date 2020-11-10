@@ -1,24 +1,19 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ShooterGameMode.h"
+#include "ShooterGame.h"
 #include "Player/ShooterCharacter.h"
-#include "UI/ShooterHUD.h"
-#include "UObject/ConstructorHelpers.h"
-#include "TimerManager.h"
-#include "GameFramework/PlayerState.h"
-#include "GameFramework/Actor.h"
-#include "Engine/World.h"
-#include "Containers/UnrealString.h"
-#include "Engine/EngineTypes.h"
 #include "Player/ShooterPlayerController.h"
 #include "Player/ShooterPlayerState.h"
+#include "UI/ShooterHUD.h"
 
 AShooterGameMode::AShooterGameMode()
 {
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Blueprints/Player/BPShooterPawn"));
-    DefaultPawnClass = PlayerPawnBPClass.Class;
+    static ConstructorHelpers::FClassFinder<AHUD> PlayerHUDBPClass(TEXT("/Game/Blueprints/UI/BPShooterHUD"));
     
-    HUDClass = AShooterHUD::StaticClass();
+    DefaultPawnClass = PlayerPawnBPClass.Class;
+    HUDClass = PlayerHUDBPClass.Class;
 	PlayerControllerClass = AShooterPlayerController::StaticClass();
     PlayerStateClass = AShooterPlayerState::StaticClass();
 }

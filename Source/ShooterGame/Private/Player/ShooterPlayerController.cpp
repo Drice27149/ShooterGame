@@ -18,7 +18,8 @@ void AShooterPlayerController::ClientTimeChange_Implementation(const int& NewTim
     AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
     if(MyShooterHUD != NULL)
     {
-        MyShooterHUD->NotifyTimeChange(FString::Printf(TEXT("%d"),NewTime));
+        FString TimeText = FString::Printf(TEXT("%d"),NewTime);
+        MyShooterHUD->NotifyTimeChange(TimeText);
     }
 }
 

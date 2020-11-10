@@ -1,9 +1,10 @@
 // Drice
 
+#include "Weapon/WeaponGun.h"
 #include "ShooterGame.h"
 #include "Weapon/ShooterProjectile.h"
 #include "Player/ShooterCharacter.h"
-#include "Weapon/WeaponGun.h"
+
 
 // Sets default values
 AWeaponGun::AWeaponGun()

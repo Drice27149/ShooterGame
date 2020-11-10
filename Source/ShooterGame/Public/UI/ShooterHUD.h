@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "UI/MatchInfoWidget.h"
-#include "Engine/EngineTypes.h"
 #include "ShooterHUD.generated.h"
 
 class FString;
@@ -19,24 +17,18 @@ class SHOOTERGAME_API AShooterHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-    
-    AShooterHUD();
-
-    /** display match information during game play **/
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = MatchInfo)
-    UMatchInfoWidget* MatchInfoWidget = NULL;
-    
-    UFUNCTION(BlueprintCallable, Category = "MatchInformation")
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
     void LoadMatchInfoWidget();
     
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
     void NotifyPlayerNameChange();
     
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
     void NotifyScoreChange();
     
-    void NotifyMatchMessage(FString Message);
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
+    void NotifyMatchMessage(const FString& Message);
     
-    void NotifyTimeChange(FString NewTime);
-    
-private:
-    TSubclassOf<class UUserWidget> MatchInfoWidgetClass;
+    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
+    void NotifyTimeChange(const FString& NewTime);
 };
