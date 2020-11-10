@@ -17,17 +17,26 @@ public:
 
 protected:
 
-    //handle player input
-    
+    /** handle player input **/
+
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnStartFire();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
 	void OnMoveForward(float Value);
 
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
 	void OnMoveRight(float Value);
+    
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnEquipDefaultWeapon();
 
 private:
     UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
     AWeapon* CurrentWeapon;
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<class AWeapon> DefaultWeaponClass;
 
     UFUNCTION()
     void OnRep_CurrentWeapon();
@@ -37,6 +46,9 @@ private:
     
     UFUNCTION(Reliable, NetMulticast)
     void AllClientStartFire();
+    
+    UFUNCTION(Reliable, Server)
+    void ServerEquipDefaultWeapon();
     
 protected:
     UFUNCTION(BlueprintImplementableEvent)

@@ -30,7 +30,6 @@ bool AWeapon::CanFire()
     return true;
 }
 
-void AWeapon::StartFire()
+void AWeapon::HandleFire()
 {
-    
 }

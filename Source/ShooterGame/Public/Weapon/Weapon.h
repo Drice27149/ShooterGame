@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "Weapon.generated.h"
 
 UCLASS()
@@ -17,7 +18,13 @@ public:
     
     virtual bool CanFire();
     
-    virtual void StartFire();
+    /** server only, only called by character on server **/
+    virtual void HandleFire();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void PlayWeaponFireAnimation();
+
+    APawn* OwnerPawn;
 
 protected:
 	// Called when the game starts or when spawned

@@ -35,13 +35,18 @@ void AScoreTarget::Tick(float DeltaTime)
 float AScoreTarget::TakeDamage(float DamageTaken, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser){
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		FVector HitLocation = DamageCauser->GetActorLocation();
-		AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
-		AShooterCharacter* ShooterPawn = Cast<AShooterCharacter>(DamageCauser->GetOwner());
-		if(MyGameMode != NULL && ShooterPawn != NULL)
-		{
-			MyGameMode->HandleHitScore(ShooterPawn,ScoreRadius,CenterLocation,HitLocation);
-		}
+        AShooterProjectile* DamageProjectile = Cast<AShooterProjectile>(DamageCauser);
+        if(DamageProjectile != NULL)
+        {
+            AShooterCharacter* DamageCharacter = Cast<AShooterCharacter>(DamageProjectile->OwnerPawn);
+            if(DamageCharacter != NULL)
+            {
+                AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+                FVector HitLocation = DamageCauser->GetActorLocation();
+                
+                MyGameMode->HandleHitScore(DamageCharacter,ScoreRadius,CenterLocation,HitLocation);
+            }
+        }
 	}
 	return 0;
 }

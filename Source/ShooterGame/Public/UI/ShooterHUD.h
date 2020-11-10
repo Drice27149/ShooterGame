@@ -38,6 +38,5 @@ public:
     void NotifyTimeChange(FString NewTime);
     
 private:
-
-    TSubclassOf<class UUserWidget> MatchInfoWidgetClass = NULL;
+    TSubclassOf<class UUserWidget> MatchInfoWidgetClass;
 };

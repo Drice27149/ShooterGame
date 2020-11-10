@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/PlayerState.h"
 #include "Weapon/Weapon.h"
+#include "Kismet/GameplayStatics.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AShooterCharacter
@@ -88,12 +89,15 @@ void AShooterCharacter::OnStartFire()
 
 void AShooterCharacter::ServerStartFire_Implementation()
 {
-    CurrentWeapon->StartFire();
+    CurrentWeapon->HandleFire();
     AllClientStartFire();
 }
 
 void AShooterCharacter::AllClientStartFire_Implementation()
 {
+    // play weapon animation
+    CurrentWeapon->PlayWeaponFireAnimation();
+    // play character animation
     PlayWeaponFireAnimation(CurrentWeapon);
 }
 
@@ -108,6 +112,28 @@ void AShooterCharacter::OnRep_CurrentWeapon()
 {
     UpdateWeaponMesh(CurrentWeapon);
     PlayWeaponChangedAnimation(CurrentWeapon);
+}
+
+void AShooterCharacter::OnEquipDefaultWeapon()
+{
+    ServerEquipDefaultWeapon();
+}
+
+void AShooterCharacter::ServerEquipDefaultWeapon_Implementation()
+{
+    if(DefaultWeaponClass != NULL)
+    {
+        FTransform SpawnTransform(GetActorRotation(), GetActorLocation());
+        AWeapon* DefaultWeapon = Cast<AWeapon>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DefaultWeaponClass, SpawnTransform));
+        if(DefaultWeapon != NULL)
+        {
+            DefaultWeapon->OwnerPawn = Cast<APawn>(this);
+            UGameplayStatics::FinishSpawningActor(DefaultWeapon, SpawnTransform);
+        }
+        CurrentWeapon = DefaultWeapon;
+        // server won't call OnRep_CurrentWeapon automatically, need to call it by hand
+        OnRep_CurrentWeapon();
+    }
 }
 
 

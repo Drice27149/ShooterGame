@@ -2,7 +2,6 @@
 
 
 #include "Weapon/ShooterProjectile.h"
-#include "Player/ShooterCharacter.h"
 
 // Sets default values
 AShooterProjectile::AShooterProjectile()
@@ -18,30 +17,11 @@ AShooterProjectile::AShooterProjectile()
 	SphereComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	RootComponent = SphereComponent;
 
-	//Definition for the Mesh that will serve as our visual representation.
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> DefaultMesh(TEXT("/Game/StarterContent/Shapes/Shape_Sphere.Shape_Sphere"));
-	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	StaticMesh->SetupAttachment(RootComponent);
-
-	//Set the Static Mesh and its position/scale if we successfully found a mesh asset to use.
-	if (DefaultMesh.Succeeded())
-	{
-		StaticMesh->SetStaticMesh(DefaultMesh.Object);
-		StaticMesh->SetRelativeLocation_Direct(FVector(0.0f, 0.0f, -37.5f));
-		StaticMesh->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
-	}
-
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> DefaultExplosionEffect(TEXT("/Game/StarterContent/Particles/P_Explosion.P_Explosion"));
-	if (DefaultExplosionEffect.Succeeded())
-	{
-		ExplosionEffect = DefaultExplosionEffect.Object;
-	}
-
 	//Definition for the Projectile Movement Component.
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovementComponent->SetUpdatedComponent(SphereComponent);
-	ProjectileMovementComponent->InitialSpeed = 1500.0f;
-	ProjectileMovementComponent->MaxSpeed = 1500.0f;
+	ProjectileMovementComponent->InitialSpeed = 1800.0f;
+	ProjectileMovementComponent->MaxSpeed = 1800.0f;
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
 
@@ -70,8 +50,11 @@ void AShooterProjectile::Tick(float DeltaTime)
 
 void AShooterProjectile::Destroyed()
 {
-	FVector spawnLocation = GetActorLocation();
-	UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionEffect, spawnLocation, FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+    if(ExplosionEffect != NULL)
+    {
+        FVector spawnLocation = GetActorLocation();
+        UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionEffect, spawnLocation, FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+    }
 }
 
 void AShooterProjectile::OnProjectileImpact(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
