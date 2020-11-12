@@ -7,22 +7,31 @@
 #include "Weapon/Weapon.h"
 #include "ShooterCharacter.generated.h"
 
-USTRUCT(BlueprintType)
+USTRUCT(Blueprintable)
 struct FStateMachine
 {
     GENERATED_USTRUCT_BODY()
     
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
     bool IsCrouching;
     
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
     bool IsJumping;
     
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
     bool IsRunning;
     
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
     bool IsViewMode;
+    
+    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
+    bool IsTurning;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StateItem")
+    float AimYaw;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StateItem")
+    float AimPitch;
     
     FStateMachine()
     {
@@ -30,6 +39,9 @@ struct FStateMachine
         IsJumping = false;
         IsRunning = false;
         IsViewMode = false;
+        IsTurning = false;
+        AimYaw = 0.0f;
+        AimPitch = 0.0f;
     }
 };
 
@@ -46,8 +58,20 @@ protected:
     /** handle player input **/
 
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnStartFire();
+    void OnCrouchStart();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnCrouchEnd();
+
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnEquipDefaultWeapon();
+
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnJumpStart();
+    
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnJumpEnd();
+
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
 	void OnMoveForward(float Value);
 
@@ -55,25 +79,19 @@ protected:
 	void OnMoveRight(float Value);
     
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnEquipDefaultWeapon();
+    void OnTurn(float Value);
     
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnCrouchStart();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnCrouchEnd();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnJumpStart();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnJumpEnd();
-    
+    void OnLookUp(float Value);
+
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnRunStart();
     
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnRunEnd();
+
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnStartFire();
     
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnViewModeStart();
@@ -88,8 +106,8 @@ private:
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<class AWeapon> DefaultWeaponClass;
 
-    UFUNCTION()
-    void OnRep_CurrentWeapon();
+    UFUNCTION(Reliable, NetMulticast)
+    void AllClientStartFire();
     
     UFUNCTION(Reliable, Server)
     void ServerStartFire();
@@ -103,10 +121,32 @@ private:
     UFUNCTION(Reliable, Server)
     void ServerChangeWalkSpeed(const int& NewSpeed);
     
-    UFUNCTION(Reliable, NetMulticast)
-    void AllClientStartFire();
+    UFUNCTION()
+    void OnRep_CurrentWeapon();
     
 protected:
+    /** replicate variable that controll the animation state machine, in order to replicate animation **/
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "StateMachine")
+    FStateMachine StateMachine;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Pawn Movement")
+    float WalkSpeed;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Pawn Movement")
+    float RunSpeed;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
+    float MyDeltaTime;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
+    float AimSpeed;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
+    float TurnSpeed;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
+    float TurnMinimum;
+
     UFUNCTION(BlueprintImplementableEvent)
     void UpdateWeaponMesh(AWeapon* MyWeapon);
 
@@ -118,15 +158,14 @@ protected:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     
-    /** replicate variable that controll the animation state machine, in order to replicate animation **/
-    UPROPERTY(BlueprintReadOnly, Replicated, Category = "StateMachine")
-    FStateMachine StateMachine;
+    UFUNCTION(BlueprintCallable, Category = "Animation Data")
+    float GetNextAimYaw(float LastAimYaw);
     
-    UPROPERTY(EditDefaultsOnly, Category = "Pawn Movement")
-    float WalkSpeed;
+    UFUNCTION(BlueprintCallable, Category = "Animation Data")
+    float GetNextAimPitch(float LastAimPitch);
     
-    UPROPERTY(EditDefaultsOnly, Category = "Pawn Movement")
-    float RunSpeed;
+    UFUNCTION(BlueprintCallable, Category = "Animation Data")
+    bool ActorWillTurn(float lastYaw, float NextYaw);
 };
 
 

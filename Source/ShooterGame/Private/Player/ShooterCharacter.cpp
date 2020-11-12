@@ -4,7 +4,6 @@
 #include "ShooterGame.h"
 #include "Weapon/Weapon.h"
 
-
 AShooterCharacter::AShooterCharacter()
 {
 	// Set size for collision capsule
@@ -25,9 +24,6 @@ AShooterCharacter::AShooterCharacter()
     CurrentWeapon = NULL;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
 void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
@@ -37,6 +33,8 @@ void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AShooterCharacter::OnMoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AShooterCharacter::OnMoveRight);
+    PlayerInputComponent->BindAxis("Turn", this, &AShooterCharacter::OnTurn);
+    PlayerInputComponent->BindAxis("LookUp", this, &AShooterCharacter::OnLookUp);
     
     PlayerInputComponent->BindAction("Fire", IE_Released, this, &AShooterCharacter::OnStartFire);
 }
@@ -188,6 +186,51 @@ void AShooterCharacter::OnViewModeEnd()
 {
     StateMachine.IsViewMode = false;
     ServerUpdateStateMachine(StateMachine);
+}
+
+void AShooterCharacter::OnTurn(float Value)
+{
+    if ( (Controller != NULL) && (Value != 0.0f) )
+    {
+        AddControllerYawInput(Value);
+    }
+}
+    
+void AShooterCharacter::OnLookUp(float Value)
+{
+    if ( (Controller != NULL) && (Value != 0.0f) )
+    {
+        AddControllerPitchInput(Value);
+    }
+}
+
+float AShooterCharacter::GetNextAimYaw(float AimYaw)
+{
+    FRotator DeltaRotation = Controller->GetControlRotation() - GetActorRotation();
+    float TargetYaw = DeltaRotation.Yaw;
+    float NextAimYaw = FMath::FInterpTo(AimYaw, TargetYaw, MyDeltaTime, AimSpeed);
+    return NextAimYaw;
+}
+    
+float AShooterCharacter::GetNextAimPitch(float AimPitch)
+{
+    FRotator DeltaRotation = Controller->GetControlRotation() - GetActorRotation();
+    float TargetPitch = DeltaRotation.Pitch;
+    float NextAimPitch = FMath::FInterpTo(AimPitch, TargetPitch, MyDeltaTime, AimSpeed);
+    return NextAimPitch;
+}
+
+bool AShooterCharacter::ActorWillTurn(float LastYaw, float NextYaw)
+{
+    float Diff = (LastYaw>NextYaw)?(LastYaw-NextYaw):(NextYaw-LastYaw);
+    if(Diff > TurnMinimum)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

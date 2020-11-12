@@ -16,6 +16,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 #include "UObject/UObjectGlobals.h"
