@@ -1,18 +1,9 @@
 // Drice
 
 #include "Player/ShooterCharacter.h"
-#include "Components/CapsuleComponent.h"
-#include "Components/InputComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Controller.h"
-#include "Net/UnrealNetwork.h"
-#include "Engine/Engine.h"
-#include "GameFramework/PlayerState.h"
+#include "ShooterGame.h"
 #include "Weapon/Weapon.h"
-#include "Kismet/GameplayStatics.h"
 
-//////////////////////////////////////////////////////////////////////////
-// AShooterCharacter
 
 AShooterCharacter::AShooterCharacter()
 {
@@ -41,8 +32,8 @@ void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AShooterCharacter::OnJumpStart);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AShooterCharacter::OnJumpEnd);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AShooterCharacter::OnMoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AShooterCharacter::OnMoveRight);
@@ -106,6 +97,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
+    DOREPLIFETIME(AShooterCharacter, StateMachine);
 }
 
 void AShooterCharacter::OnRep_CurrentWeapon()
@@ -134,6 +126,68 @@ void AShooterCharacter::ServerEquipDefaultWeapon_Implementation()
         // server won't call OnRep_CurrentWeapon automatically, need to call it by hand
         OnRep_CurrentWeapon();
     }
+}
+
+void AShooterCharacter::ServerUpdateStateMachine_Implementation(const FStateMachine& NewState)
+{
+    StateMachine = NewState;
+}
+
+void AShooterCharacter::ServerChangeWalkSpeed_Implementation(const int& NewSpeed)
+{
+    GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
+}
+
+void AShooterCharacter::OnCrouchStart()
+{
+    StateMachine.IsCrouching = true;
+    ServerUpdateStateMachine(StateMachine);
+}
+    
+void AShooterCharacter::OnCrouchEnd()
+{
+    StateMachine.IsCrouching = false;
+    ServerUpdateStateMachine(StateMachine);
+}
+    
+void AShooterCharacter::OnJumpStart()
+{
+    Jump();
+    StateMachine.IsJumping = true;
+    ServerUpdateStateMachine(StateMachine);
+}
+    
+void AShooterCharacter::OnJumpEnd()
+{
+    StopJumping();
+    StateMachine.IsJumping = false;
+    ServerUpdateStateMachine(StateMachine);
+}
+    
+void AShooterCharacter::OnRunStart()
+{
+    StateMachine.IsRunning = true;
+    ServerUpdateStateMachine(StateMachine);
+    ServerChangeWalkSpeed(RunSpeed);
+}
+    
+void AShooterCharacter::OnRunEnd()
+{
+    StateMachine.IsRunning = false;
+    ServerUpdateStateMachine(StateMachine);
+    ServerChangeWalkSpeed(WalkSpeed);
+}
+    
+void AShooterCharacter::OnViewModeStart()
+{
+    StateMachine.IsViewMode = true;
+    ServerUpdateStateMachine(StateMachine);
+}
+
+void AShooterCharacter::OnViewModeEnd()
+{
+    StateMachine.IsViewMode = false;
+    ServerUpdateStateMachine(StateMachine);
 }
 
 
