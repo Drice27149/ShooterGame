@@ -3,15 +3,17 @@
 #include "Player/ShooterCharacter.h"
 #include "ShooterGame.h"
 #include "Weapon/Weapon.h"
+#include "Player/MyCharacterMovementComponent.h"
 
-AShooterCharacter::AShooterCharacter()
+AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UMyCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
@@ -24,6 +26,50 @@ AShooterCharacter::AShooterCharacter()
     CurrentWeapon = NULL;
 }
 
+bool AShooterCharacter::IsRunning()
+{
+    return bRunning;
+}
+    
+bool AShooterCharacter::IsJumping()
+{
+    return bJumping;
+}
+    
+bool AShooterCharacter::IsCrouching()
+{
+    return bCrouching;
+}
+    
+bool AShooterCharacter::IsTurning()
+{
+    return bTurning;
+}
+    
+bool AShooterCharacter::IsViewMode()
+{
+    return !bUseControllerRotationYaw;
+}
+
+FRotator AShooterCharacter::GetAimOffset()
+{
+    const FVector AimDirWS = GetBaseAimRotation().Vector();
+	const FVector AimDirLS = ActorToWorld().InverseTransformVectorNoScale(AimDirWS);
+	const FRotator AimRotLS = AimDirLS.Rotation();
+
+	return AimRotLS;
+}
+
+float AShooterCharacter::GetWalkSpeedMultiplier()
+{
+    return WalkSpeedMultiplier;
+}
+    
+float AShooterCharacter::GetRunSpeedMultiplier()
+{
+    return RunSpeedMultiplier;
+}
+    
 void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
@@ -95,7 +141,10 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
-    DOREPLIFETIME(AShooterCharacter, StateMachine);
+    DOREPLIFETIME(AShooterCharacter, bRunning);
+    DOREPLIFETIME(AShooterCharacter, bJumping);
+    DOREPLIFETIME(AShooterCharacter, bCrouching);
+    DOREPLIFETIME(AShooterCharacter, bTurning);
 }
 
 void AShooterCharacter::OnRep_CurrentWeapon()
@@ -126,66 +175,54 @@ void AShooterCharacter::ServerEquipDefaultWeapon_Implementation()
     }
 }
 
-void AShooterCharacter::ServerUpdateStateMachine_Implementation(const FStateMachine& NewState)
-{
-    StateMachine = NewState;
-}
-
-void AShooterCharacter::ServerChangeWalkSpeed_Implementation(const int& NewSpeed)
-{
-    GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
-}
-
 void AShooterCharacter::OnCrouchStart()
 {
-    StateMachine.IsCrouching = true;
-    ServerUpdateStateMachine(StateMachine);
+    bCrouching = true;
+    ServerSetCrouching(true);
 }
     
 void AShooterCharacter::OnCrouchEnd()
 {
-    StateMachine.IsCrouching = false;
-    ServerUpdateStateMachine(StateMachine);
+    bCrouching = false;
+    ServerSetCrouching(false);
 }
     
 void AShooterCharacter::OnJumpStart()
 {
+    bJumping = true;
+    ServerSetJumping(true);
     Jump();
-    StateMachine.IsJumping = true;
-    ServerUpdateStateMachine(StateMachine);
 }
     
 void AShooterCharacter::OnJumpEnd()
 {
+    bJumping = false;
+    ServerSetJumping(false);
     StopJumping();
-    StateMachine.IsJumping = false;
-    ServerUpdateStateMachine(StateMachine);
 }
     
 void AShooterCharacter::OnRunStart()
 {
-    StateMachine.IsRunning = true;
-    ServerUpdateStateMachine(StateMachine);
-    ServerChangeWalkSpeed(RunSpeed);
+    bRunning = true;
+    ServerSetRunning(true);
 }
     
 void AShooterCharacter::OnRunEnd()
 {
-    StateMachine.IsRunning = false;
-    ServerUpdateStateMachine(StateMachine);
-    ServerChangeWalkSpeed(WalkSpeed);
+    bRunning = false;
+    ServerSetRunning(false);
 }
     
 void AShooterCharacter::OnViewModeStart()
 {
-    StateMachine.IsViewMode = true;
-    ServerUpdateStateMachine(StateMachine);
+    bUseControllerRotationYaw = false;
+    ServerSetViewMode(true);
 }
 
 void AShooterCharacter::OnViewModeEnd()
 {
-    StateMachine.IsViewMode = false;
-    ServerUpdateStateMachine(StateMachine);
+    bUseControllerRotationYaw = true;
+    ServerSetViewMode(false);
 }
 
 void AShooterCharacter::OnTurn(float Value)
@@ -193,6 +230,17 @@ void AShooterCharacter::OnTurn(float Value)
     if ( (Controller != NULL) && (Value != 0.0f) )
     {
         AddControllerYawInput(Value);
+    }
+    
+    if(Value < -MinTurnRate || Value > MinTurnRate)
+    {
+        bTurning = true;
+        ServerSetTurning(true);
+    }
+    else
+    {
+        bTurning = false;
+        ServerSetTurning(false);
     }
 }
     
@@ -203,34 +251,36 @@ void AShooterCharacter::OnLookUp(float Value)
         AddControllerPitchInput(Value);
     }
 }
-
-float AShooterCharacter::GetNextAimYaw(float AimYaw)
+    
+void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
 {
-    FRotator DeltaRotation = Controller->GetControlRotation() - GetActorRotation();
-    float TargetYaw = DeltaRotation.Yaw;
-    float NextAimYaw = FMath::FInterpTo(AimYaw, TargetYaw, MyDeltaTime, AimSpeed);
-    return NextAimYaw;
+    bRunning = Value;
 }
     
-float AShooterCharacter::GetNextAimPitch(float AimPitch)
+void AShooterCharacter::ServerSetJumping_Implementation(bool Value)
 {
-    FRotator DeltaRotation = Controller->GetControlRotation() - GetActorRotation();
-    float TargetPitch = DeltaRotation.Pitch;
-    float NextAimPitch = FMath::FInterpTo(AimPitch, TargetPitch, MyDeltaTime, AimSpeed);
-    return NextAimPitch;
+    bJumping = Value;
 }
 
-bool AShooterCharacter::ActorWillTurn(float LastYaw, float NextYaw)
+void AShooterCharacter::ServerSetCrouching_Implementation(bool Value)
 {
-    float Diff = (LastYaw>NextYaw)?(LastYaw-NextYaw):(NextYaw-LastYaw);
-    if(Diff > TurnMinimum)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    bCrouching = Value;
+}
+    
+void AShooterCharacter::ServerSetViewMode_Implementation(bool Value)
+{
+    bUseControllerRotationYaw = !Value;
+    AllClientSetViewMode(Value);
+}
+
+void AShooterCharacter::ServerSetTurning_Implementation(bool Value)
+{
+    bTurning = Value;
+}
+
+void AShooterCharacter::AllClientSetViewMode_Implementation(bool Value)
+{
+    bUseControllerRotationYaw = !Value;
 }
 
 

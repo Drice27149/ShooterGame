@@ -7,51 +7,32 @@
 #include "Weapon/Weapon.h"
 #include "ShooterCharacter.generated.h"
 
-USTRUCT(Blueprintable)
-struct FStateMachine
-{
-    GENERATED_USTRUCT_BODY()
-    
-    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
-    bool IsCrouching;
-    
-    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
-    bool IsJumping;
-    
-    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
-    bool IsRunning;
-    
-    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
-    bool IsViewMode;
-    
-    UPROPERTY(BlueprintReadOnly, Category = "StateItem")
-    bool IsTurning;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StateItem")
-    float AimYaw;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StateItem")
-    float AimPitch;
-    
-    FStateMachine()
-    {
-        IsCrouching = false;
-        IsJumping = false;
-        IsRunning = false;
-        IsViewMode = false;
-        IsTurning = false;
-        AimYaw = 0.0f;
-        AimPitch = 0.0f;
-    }
-};
-
 UCLASS(config=Game)
 class AShooterCharacter : public ACharacter
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 public:
-
-	AShooterCharacter();
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    bool IsRunning();
+    
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    bool IsJumping();
+    
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    bool IsCrouching();
+    
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    bool IsTurning();
+    
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    bool IsViewMode();
+    
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    FRotator GetAimOffset();
+    
+    float GetWalkSpeedMultiplier();
+    
+    float GetRunSpeedMultiplier();
 
 protected:
 
@@ -103,12 +84,29 @@ private:
     UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
     AWeapon* CurrentWeapon;
 
+    UPROPERTY(Replicated)
+    bool bRunning = false;
+    
+    UPROPERTY(Replicated)
+    bool bCrouching = false;
+    
+    UPROPERTY(Replicated)
+    bool bJumping = false;
+    
+    UPROPERTY(Replicated)
+    bool bTurning = false;
+
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<class AWeapon> DefaultWeaponClass;
 
+    /**all client**/
     UFUNCTION(Reliable, NetMulticast)
     void AllClientStartFire();
     
+    UFUNCTION(Reliable, NetMulticast)
+    void AllClientSetViewMode(bool Value);
+    
+    /**server**/
     UFUNCTION(Reliable, Server)
     void ServerStartFire();
     
@@ -116,37 +114,31 @@ private:
     void ServerEquipDefaultWeapon();
     
     UFUNCTION(Reliable, Server)
-    void ServerUpdateStateMachine(const FStateMachine& NewState);
+    void ServerSetRunning(bool Value);
     
     UFUNCTION(Reliable, Server)
-    void ServerChangeWalkSpeed(const int& NewSpeed);
+    void ServerSetJumping(bool Value);
+    
+    UFUNCTION(Reliable, Server)
+    void ServerSetCrouching(bool Value);
+    
+    UFUNCTION(Reliable, Server)
+    void ServerSetViewMode(bool Value);
+    
+    UFUNCTION(Reliable, Server)
+    void ServerSetTurning(bool Value);
     
     UFUNCTION()
     void OnRep_CurrentWeapon();
     
 protected:
-    /** replicate variable that controll the animation state machine, in order to replicate animation **/
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "StateMachine")
-    FStateMachine StateMachine;
     
-    UPROPERTY(EditDefaultsOnly, Category = "Pawn Movement")
-    float WalkSpeed;
+    UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+    float RunSpeedMultiplier;
     
-    UPROPERTY(EditDefaultsOnly, Category = "Pawn Movement")
-    float RunSpeed;
+    UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+    float WalkSpeedMultiplier;
     
-    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
-    float MyDeltaTime;
-    
-    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
-    float AimSpeed;
-    
-    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
-    float TurnSpeed;
-    
-    UPROPERTY(EditDefaultsOnly, Category = "Animation Data")
-    float TurnMinimum;
-
     UFUNCTION(BlueprintImplementableEvent)
     void UpdateWeaponMesh(AWeapon* MyWeapon);
 
@@ -158,14 +150,9 @@ protected:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     
-    UFUNCTION(BlueprintCallable, Category = "Animation Data")
-    float GetNextAimYaw(float LastAimYaw);
-    
-    UFUNCTION(BlueprintCallable, Category = "Animation Data")
-    float GetNextAimPitch(float LastAimPitch);
-    
-    UFUNCTION(BlueprintCallable, Category = "Animation Data")
-    bool ActorWillTurn(float lastYaw, float NextYaw);
+private:
+    UPROPERTY(EditDefaultsOnly, Category = "Charater Rotation")
+    float MinTurnRate;
 };
 
 
