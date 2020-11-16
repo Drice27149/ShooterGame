@@ -33,6 +33,8 @@ public:
     float GetWalkSpeedMultiplier();
     
     float GetRunSpeedMultiplier();
+    
+    float PlayCharacterMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1.0f);
 
 protected:
 
@@ -80,6 +82,9 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnViewModeEnd();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnStartReload();
+    
 private:
     UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
     AWeapon* CurrentWeapon;
@@ -98,6 +103,9 @@ private:
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<class AWeapon> DefaultWeaponClass;
+
+    UFUNCTION()
+    void OnRep_CurrentWeapon();
 
     /**all client**/
     UFUNCTION(Reliable, NetMulticast)
@@ -128,11 +136,7 @@ private:
     UFUNCTION(Reliable, Server)
     void ServerSetTurning(bool Value);
     
-    UFUNCTION()
-    void OnRep_CurrentWeapon();
-    
 protected:
-    
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float RunSpeedMultiplier;
     

@@ -2,6 +2,9 @@
 
 
 #include "Weapon/ShooterProjectile.h"
+#include "ShooterGame.h"
+#include "Player/ShooterCharacter.h"
+
 
 // Sets default values
 AShooterProjectile::AShooterProjectile()

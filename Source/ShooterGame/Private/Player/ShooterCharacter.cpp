@@ -3,6 +3,7 @@
 #include "Player/ShooterCharacter.h"
 #include "ShooterGame.h"
 #include "Weapon/Weapon.h"
+#include "Weapon/WeaponGun.h"
 #include "Player/MyCharacterMovementComponent.h"
 
 AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer)
@@ -166,7 +167,9 @@ void AShooterCharacter::ServerEquipDefaultWeapon_Implementation()
         AWeapon* DefaultWeapon = Cast<AWeapon>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DefaultWeaponClass, SpawnTransform));
         if(DefaultWeapon != NULL)
         {
-            DefaultWeapon->OwnerPawn = Cast<APawn>(this);
+            DefaultWeapon->SetOwnerCharacter(this);
+            //for rpcs
+            DefaultWeapon->SetOwner(this);
             UGameplayStatics::FinishSpawningActor(DefaultWeapon, SpawnTransform);
         }
         CurrentWeapon = DefaultWeapon;
@@ -251,6 +254,8 @@ void AShooterCharacter::OnLookUp(float Value)
         AddControllerPitchInput(Value);
     }
 }
+
+
     
 void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
 {
@@ -281,6 +286,25 @@ void AShooterCharacter::ServerSetTurning_Implementation(bool Value)
 void AShooterCharacter::AllClientSetViewMode_Implementation(bool Value)
 {
     bUseControllerRotationYaw = !Value;
+}
+
+float AShooterCharacter::PlayCharacterMontage(UAnimMontage* AnimMontage, float InPlayRate)
+{
+	if (AnimMontage && GetMesh() && GetMesh()->AnimScriptInstance)
+	{
+		return GetMesh()->AnimScriptInstance->Montage_Play(AnimMontage, InPlayRate);
+	}
+
+	return 0.0f;
+}
+
+void AShooterCharacter::OnStartReload()
+{
+    AWeaponGun* CurrentWeaponGun = Cast<AWeaponGun>(CurrentWeapon);
+    if(CurrentWeaponGun)
+    {
+        CurrentWeaponGun->StartReload();
+    }
 }
 
 

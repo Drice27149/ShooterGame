@@ -2,28 +2,15 @@
 
 
 #include "Weapon/Weapon.h"
+#include "ShooterGame.h"
+
 
 // Sets default values
 AWeapon::AWeapon()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
     
     bReplicates = true;
 }
-
-// Called when the game starts or when spawned
-void AWeapon::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-// Called every frame
-void AWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
 
 bool AWeapon::CanFire()
 {
@@ -32,4 +19,17 @@ bool AWeapon::CanFire()
 
 void AWeapon::HandleFire()
 {
+}
+
+
+void AWeapon::SetOwnerCharacter(AShooterCharacter* NewOwnerCharacter)
+{
+    OwnerCharacter = NewOwnerCharacter;
+}
+
+void AWeapon::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    
+    DOREPLIFETIME(AWeapon, OwnerCharacter);
 }

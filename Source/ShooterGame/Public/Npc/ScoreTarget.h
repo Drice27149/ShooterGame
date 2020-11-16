@@ -3,15 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Components/SphereComponent.h"
-#include "Components/StaticMeshComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
-#include "GameFramework/DamageType.h"
-#include "Particles/ParticleSystem.h"
-#include "Kismet/GameplayStatics.h"
-#include "UObject/ConstructorHelpers.h"
 #include "ScoreTarget.generated.h"
+
+class DamageEvent;
+class AController;
 
 UCLASS()
 class AScoreTarget : public AActor

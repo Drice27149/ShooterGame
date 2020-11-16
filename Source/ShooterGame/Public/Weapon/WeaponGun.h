@@ -19,9 +19,14 @@ public:
     /** server only, handle fire and create projectile **/
     virtual void HandleFire() override;
     
+    void StartReload(bool bRemoteClient = false);
+    
 protected:
-    UPROPERTY(Replicated, EditDefaultsOnly, Category = "GunData")
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Debug data")
     int BulletCount;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "GunData")
+    int MaxBulletCount;
     
     UPROPERTY(EditDefaultsOnly, Category = "GunData")
     int CoolDownDuration;
@@ -32,7 +37,37 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "GunData")
     class USphereComponent* CenterComp;
     
-    /** use to spawn projectile, value will be set in blueprint **/
+    /** use to spawn projectile **/
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GunData")
     class USceneComponent* FirePointComp;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Shooter Mesh")
+    class USkeletalMeshComponent* Mesh;
+    
+    //Animation
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    class UAnimMontage* WeaponFireAnimation;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    class UAnimMontage* WeaponReloadAnimation;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    class UAnimMontage* PawnFireAnimation;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    class UAnimMontage* PawnReloadAnimation;
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void FireTest(int seed);
+    
+private:
+    UFUNCTION(Reliable, Server)
+    void ServerStartReload();
+
+    // cosmetice function on remote client
+    UFUNCTION(Reliable, NetMulticast)
+    void MulticastStartReload();
+    
+    float PlayWeaponGunMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1.0f);
 };

@@ -1,17 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#include "Components/SphereComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
-#include "GameFramework/DamageType.h"
-#include "Particles/ParticleSystem.h"
-#include "Kismet/GameplayStatics.h"
-#include "UObject/ConstructorHelpers.h"
+
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "GameFramework/Pawn.h"
 #include "ShooterProjectile.generated.h"
 
+class UPrimitiveComponent;
 
 UCLASS()
 class AShooterProjectile : public AActor
@@ -41,7 +35,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
 	float Damage;
 
-	APawn* OwnerPawn;
+	class AShooterCharacter* OwnerCharacter;
 
 protected:
 	// Called when the game starts or when spawned
@@ -50,7 +44,7 @@ protected:
 	virtual void Destroyed() override;
 
 	UFUNCTION(Category = "Projectile")
-	void OnProjectileImpact(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void OnProjectileImpact(UPrimitiveComponent* HitComponent,AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 public:	
 

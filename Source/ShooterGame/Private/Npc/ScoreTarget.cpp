@@ -2,9 +2,9 @@
 
 
 #include "Npc/ScoreTarget.h"
+#include "ShooterGame.h"
 #include "Weapon/ShooterProjectile.h"
 #include "Player/ShooterCharacter.h"
-#include "Kismet/GameplayStatics.h"
 #include "ShooterGameMode.h" 
 
 // Sets default values
@@ -38,7 +38,7 @@ float AScoreTarget::TakeDamage(float DamageTaken, struct FDamageEvent const& Dam
         AShooterProjectile* DamageProjectile = Cast<AShooterProjectile>(DamageCauser);
         if(DamageProjectile != NULL)
         {
-            AShooterCharacter* DamageCharacter = Cast<AShooterCharacter>(DamageProjectile->OwnerPawn);
+            AShooterCharacter* DamageCharacter = DamageProjectile->OwnerCharacter;
             if(DamageCharacter != NULL)
             {
                 AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));

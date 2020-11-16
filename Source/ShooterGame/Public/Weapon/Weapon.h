@@ -7,6 +7,8 @@
 #include "GameFramework/Pawn.h"
 #include "Weapon.generated.h"
 
+class AShooterCharacter;
+
 UCLASS()
 class SHOOTERGAME_API AWeapon : public AActor
 {
@@ -23,14 +25,12 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent)
     void PlayWeaponFireAnimation();
-
-    APawn* OwnerPawn;
-
+    
+    /** server only **/ 
+    void SetOwnerCharacter(AShooterCharacter* NewOwnerCharacter);
+    
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+    /** replicate for calling cosmetic function on remote client **/
+    UPROPERTY(Replicated)
+    AShooterCharacter* OwnerCharacter;
 };
