@@ -22,7 +22,7 @@ public:
     bool IsCrouching();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
-    bool IsTurning();
+    float GetTurnDirection();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     bool IsViewMode();
@@ -98,8 +98,9 @@ private:
     UPROPERTY(Replicated)
     bool bJumping = false;
     
+    /** -1: Turning left, 0: Not turning, 1: Turning Right **/
     UPROPERTY(Replicated)
-    bool bTurning = false;
+    float TurnDirection = 0.0f;
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<class AWeapon> DefaultWeaponClass;
@@ -134,7 +135,7 @@ private:
     void ServerSetViewMode(bool Value);
     
     UFUNCTION(Reliable, Server)
-    void ServerSetTurning(bool Value);
+    void ServerSetTurnDirection(float Value);
     
 protected:
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
@@ -153,10 +154,6 @@ protected:
     void PlayWeaponFireAnimation(AWeapon* MyWeapon);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-    
-private:
-    UPROPERTY(EditDefaultsOnly, Category = "Charater Rotation")
-    float MinTurnRate;
 };
 
 

@@ -42,9 +42,9 @@ bool AShooterCharacter::IsCrouching()
     return bCrouching;
 }
     
-bool AShooterCharacter::IsTurning()
+float AShooterCharacter::GetTurnDirection()
 {
-    return bTurning;
+    return TurnDirection;
 }
     
 bool AShooterCharacter::IsViewMode()
@@ -145,7 +145,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
     DOREPLIFETIME(AShooterCharacter, bRunning);
     DOREPLIFETIME(AShooterCharacter, bJumping);
     DOREPLIFETIME(AShooterCharacter, bCrouching);
-    DOREPLIFETIME(AShooterCharacter, bTurning);
+    DOREPLIFETIME(AShooterCharacter, TurnDirection);
 }
 
 void AShooterCharacter::OnRep_CurrentWeapon()
@@ -234,17 +234,7 @@ void AShooterCharacter::OnTurn(float Value)
     {
         AddControllerYawInput(Value);
     }
-    
-    if(Value < -MinTurnRate || Value > MinTurnRate)
-    {
-        bTurning = true;
-        ServerSetTurning(true);
-    }
-    else
-    {
-        bTurning = false;
-        ServerSetTurning(false);
-    }
+    ServerSetTurnDirection(Value);
 }
     
 void AShooterCharacter::OnLookUp(float Value)
@@ -278,9 +268,9 @@ void AShooterCharacter::ServerSetViewMode_Implementation(bool Value)
     AllClientSetViewMode(Value);
 }
 
-void AShooterCharacter::ServerSetTurning_Implementation(bool Value)
+void AShooterCharacter::ServerSetTurnDirection_Implementation(float Value)
 {
-    bTurning = Value;
+    TurnDirection = Value;
 }
 
 void AShooterCharacter::AllClientSetViewMode_Implementation(bool Value)
