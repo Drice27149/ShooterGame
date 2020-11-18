@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Weapon/Weapon.h"
 #include "ShooterCharacter.generated.h"
+
+class AWeapon;
 
 UCLASS(config=Game)
 class AShooterCharacter : public ACharacter
@@ -30,6 +31,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     FRotator GetAimOffset();
     
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    int GetCurrentWeaponType();
+    
     float GetWalkSpeedMultiplier();
     
     float GetRunSpeedMultiplier();
@@ -47,7 +51,7 @@ protected:
     void OnCrouchEnd();
 
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnEquipDefaultWeapon();
+    void OnCreateDefaultWeapon();
 
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnJumpStart();
@@ -85,9 +89,24 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnStartReload();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnEquipGun();
+    
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnEquipSword();
+    
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnUnEquip();
+    
 private:
-    UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
+    UPROPERTY(Replicated)
     AWeapon* CurrentWeapon;
+    
+    UPROPERTY(Replicated)
+    AWeapon* DefaultGun;
+    
+    UPROPERTY(Replicated)
+    AWeapon* DefaultSword;
 
     UPROPERTY(Replicated)
     bool bRunning = false;
@@ -103,24 +122,21 @@ private:
     float TurnDirection = 0.0f;
 
     UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<class AWeapon> DefaultWeaponClass;
+    TSubclassOf<AWeapon> DefaultGunClass;
 
-    UFUNCTION()
-    void OnRep_CurrentWeapon();
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AWeapon> DefaultSwordClass;
 
-    /**all client**/
+    /**Multicast**/
     UFUNCTION(Reliable, NetMulticast)
-    void AllClientStartFire();
+    void MulticastSetViewMode(bool Value);
     
-    UFUNCTION(Reliable, NetMulticast)
-    void AllClientSetViewMode(bool Value);
-    
-    /**server**/
+    /**Server**/    //todo: simplify these code by using Acharacter
     UFUNCTION(Reliable, Server)
-    void ServerStartFire();
+    void ServerCreateDefaultWeapon();
     
     UFUNCTION(Reliable, Server)
-    void ServerEquipDefaultWeapon();
+    void ServerSetCurrentWeapon(AWeapon* NewWeapon);
     
     UFUNCTION(Reliable, Server)
     void ServerSetRunning(bool Value);
@@ -143,15 +159,6 @@ protected:
     
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float WalkSpeedMultiplier;
-    
-    UFUNCTION(BlueprintImplementableEvent)
-    void UpdateWeaponMesh(AWeapon* MyWeapon);
-
-    UFUNCTION(BlueprintImplementableEvent)
-    void PlayWeaponChangedAnimation(AWeapon* MyWeapon);
-
-    UFUNCTION(BlueprintImplementableEvent)
-    void PlayWeaponFireAnimation(AWeapon* MyWeapon);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };

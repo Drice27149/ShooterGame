@@ -119,22 +119,8 @@ void AShooterCharacter::OnStartFire()
 {
     if(CurrentWeapon != NULL && CurrentWeapon->CanFire())
     {
-        ServerStartFire();
+        CurrentWeapon->StartFire();
     }
-}
-
-void AShooterCharacter::ServerStartFire_Implementation()
-{
-    CurrentWeapon->HandleFire();
-    AllClientStartFire();
-}
-
-void AShooterCharacter::AllClientStartFire_Implementation()
-{
-    // play weapon animation
-    CurrentWeapon->PlayWeaponFireAnimation();
-    // play character animation
-    PlayWeaponFireAnimation(CurrentWeapon);
 }
 
 void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -142,40 +128,49 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
+    DOREPLIFETIME(AShooterCharacter, DefaultGun);
+    DOREPLIFETIME(AShooterCharacter, DefaultSword);
     DOREPLIFETIME(AShooterCharacter, bRunning);
     DOREPLIFETIME(AShooterCharacter, bJumping);
     DOREPLIFETIME(AShooterCharacter, bCrouching);
     DOREPLIFETIME(AShooterCharacter, TurnDirection);
+    DOREPLIFETIME(AShooterCharacter, DefaultGun);
 }
 
-void AShooterCharacter::OnRep_CurrentWeapon()
+void AShooterCharacter::OnCreateDefaultWeapon()
 {
-    UpdateWeaponMesh(CurrentWeapon);
-    PlayWeaponChangedAnimation(CurrentWeapon);
+    ServerCreateDefaultWeapon();
 }
 
-void AShooterCharacter::OnEquipDefaultWeapon()
+void AShooterCharacter::ServerCreateDefaultWeapon_Implementation()
 {
-    ServerEquipDefaultWeapon();
-}
-
-void AShooterCharacter::ServerEquipDefaultWeapon_Implementation()
-{
-    if(DefaultWeaponClass != NULL)
+    if(DefaultGunClass)
     {
         FTransform SpawnTransform(GetActorRotation(), GetActorLocation());
-        AWeapon* DefaultWeapon = Cast<AWeapon>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DefaultWeaponClass, SpawnTransform));
-        if(DefaultWeapon != NULL)
+        DefaultGun = Cast<AWeapon>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DefaultGunClass, SpawnTransform));
+        if(DefaultGun)
         {
-            DefaultWeapon->SetOwnerCharacter(this);
+            DefaultGun->SetOwnerCharacter(this);
             //for rpcs
-            DefaultWeapon->SetOwner(this);
-            UGameplayStatics::FinishSpawningActor(DefaultWeapon, SpawnTransform);
+            DefaultGun->SetOwner(this);
+            UGameplayStatics::FinishSpawningActor(DefaultGun, SpawnTransform);
         }
-        CurrentWeapon = DefaultWeapon;
-        // server won't call OnRep_CurrentWeapon automatically, need to call it by hand
-        OnRep_CurrentWeapon();
     }
+    
+    if(DefaultSwordClass)
+    {
+        FTransform SpawnTransform(GetActorRotation(), GetActorLocation());
+        DefaultSword = Cast<AWeapon>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DefaultSwordClass, SpawnTransform));
+        if(DefaultSword)
+        {
+            DefaultSword->SetOwnerCharacter(this);
+            //for rpcs
+            DefaultSword->SetOwner(this);
+            UGameplayStatics::FinishSpawningActor(DefaultSword, SpawnTransform);
+        }
+    }
+    
+    CurrentWeapon = NULL;
 }
 
 void AShooterCharacter::OnCrouchStart()
@@ -244,8 +239,6 @@ void AShooterCharacter::OnLookUp(float Value)
         AddControllerPitchInput(Value);
     }
 }
-
-
     
 void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
 {
@@ -265,7 +258,7 @@ void AShooterCharacter::ServerSetCrouching_Implementation(bool Value)
 void AShooterCharacter::ServerSetViewMode_Implementation(bool Value)
 {
     bUseControllerRotationYaw = !Value;
-    AllClientSetViewMode(Value);
+    MulticastSetViewMode(Value);
 }
 
 void AShooterCharacter::ServerSetTurnDirection_Implementation(float Value)
@@ -273,7 +266,7 @@ void AShooterCharacter::ServerSetTurnDirection_Implementation(float Value)
     TurnDirection = Value;
 }
 
-void AShooterCharacter::AllClientSetViewMode_Implementation(bool Value)
+void AShooterCharacter::MulticastSetViewMode_Implementation(bool Value)
 {
     bUseControllerRotationYaw = !Value;
 }
@@ -297,4 +290,45 @@ void AShooterCharacter::OnStartReload()
     }
 }
 
+void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon)
+{
+    CurrentWeapon = NewWeapon;
+}
 
+void AShooterCharacter::OnEquipGun()
+{
+    if(DefaultGun)
+    {
+        DefaultGun->StartEquip();
+    }
+    ServerSetCurrentWeapon(DefaultGun);
+}
+
+void AShooterCharacter::OnEquipSword()
+{
+    if(DefaultSword)
+    {
+        DefaultSword->StartEquip();
+    }
+    ServerSetCurrentWeapon(DefaultSword);
+}
+
+void AShooterCharacter::OnUnEquip()
+{
+    if(CurrentWeapon)
+    {
+        CurrentWeapon->StartUnEquip();
+    }
+    ServerSetCurrentWeapon(NULL);
+}
+
+int AShooterCharacter::GetCurrentWeaponType()
+{
+    if(CurrentWeapon)
+    {
+        return CurrentWeapon->GetWeaponTypeId();
+    }
+    else{
+        return 0;
+    }
+}

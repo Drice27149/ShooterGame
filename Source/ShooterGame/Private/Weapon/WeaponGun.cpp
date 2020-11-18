@@ -9,47 +9,13 @@
 // Sets default values
 AWeaponGun::AWeaponGun()
 {
-    CenterComp = CreateDefaultSubobject<USphereComponent>(TEXT("RootComp"));
-    RootComponent = CenterComp;
-    
     FirePointComp = CreateDefaultSubobject<USceneComponent>(TEXT("FirePointComp"));
     FirePointComp->SetupAttachment(RootComponent);
-    
-    Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponGunMesh"));
-	Mesh->SetupAttachment(RootComponent);
     
     bReplicates = true;
     
     BulletCount = MaxBulletCount;
-}
-
-bool AWeaponGun::CanFire()
-{
-    if(BulletCount>0)
-    {
-        return true;
-    }
-    else{
-        return false;
-    }
-}
-
-void AWeaponGun::HandleFire()
-{
-    BulletCount--;
-    if(ProjectileClass != NULL)
-    {
-        FRotator FireRotation = FirePointComp->GetComponentRotation();
-        FVector FireLocation = FirePointComp->GetComponentLocation();
-        FTransform SpawnTransform(FireRotation, FireLocation);
-        AShooterProjectile* SpawnedProjectile = Cast<AShooterProjectile>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ProjectileClass, SpawnTransform));
-        if(SpawnedProjectile != NULL)
-        {
-            SpawnedProjectile->OwnerCharacter = OwnerCharacter;
-            UGameplayStatics::FinishSpawningActor(SpawnedProjectile, SpawnTransform);
-        }
-    }
-}
+} 
 
 void AWeaponGun::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
@@ -81,7 +47,7 @@ void AWeaponGun::StartReload(bool bRemoteClient)
         if(OwnerCharacter)
         {
             OwnerCharacter->PlayCharacterMontage(PawnReloadAnimation);
-            PlayWeaponGunMontage(WeaponReloadAnimation);
+            PlayWeaponMontage(WeaponReloadAnimation);
         } 
     }
 }
@@ -93,17 +59,53 @@ void AWeaponGun::ServerStartReload_Implementation()
     MulticastStartReload();
 }
 
-float AWeaponGun::PlayWeaponGunMontage(UAnimMontage* AnimMontage, float InPlayRate)
-{
-	if (AnimMontage && Mesh && Mesh->AnimScriptInstance)
-	{
-		return Mesh->AnimScriptInstance->Montage_Play(AnimMontage, InPlayRate);
-	}
-
-	return 0.0f;
-}
-
 void AWeaponGun::MulticastStartReload_Implementation()
 {
     StartReload(true);
+}
+
+bool AWeaponGun::CanFire()
+{
+    if(BulletCount>0)
+    {
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+int AWeaponGun::GetWeaponTypeId()
+{
+    return 1;
+}
+
+void AWeaponGun::HandleFiring(bool bfromReplication)
+{
+    //server
+    if(GetLocalRole() == ROLE_Authority && !bfromReplication)
+    {
+        //spawn and fire projectile
+        BulletCount--;
+        if(ProjectileClass != NULL)
+        {
+            FRotator FireRotation = FirePointComp->GetComponentRotation();
+            FVector FireLocation = FirePointComp->GetComponentLocation();
+            FTransform SpawnTransform(FireRotation, FireLocation);
+            AShooterProjectile* SpawnedProjectile = Cast<AShooterProjectile>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, ProjectileClass, SpawnTransform));
+            if(SpawnedProjectile != NULL)
+            {
+                SpawnedProjectile->OwnerCharacter = OwnerCharacter;
+                UGameplayStatics::FinishSpawningActor(SpawnedProjectile, SpawnTransform);
+            }
+        }
+    }
+    
+    if(GetLocalRole() != ROLE_Authority)
+    {
+        if(OwnerCharacter){
+            OwnerCharacter->PlayCharacterMontage(FireMontage_Character);
+            PlayWeaponMontage(FireMontage_Weapon);
+        }
+    }
 }

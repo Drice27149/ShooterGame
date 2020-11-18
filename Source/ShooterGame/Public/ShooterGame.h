@@ -16,6 +16,7 @@
 #include "Engine/World.h"
 #include "Engine/EngineTypes.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/DamageType.h"
