@@ -6,6 +6,8 @@
 
 AWeaponSword::AWeaponSword(){
     bReplicates = true;
+    bCanCombo = true;
+    NextCombo = 0;
 }
 
 void AWeaponSword::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
