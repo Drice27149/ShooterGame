@@ -17,7 +17,7 @@
 
 ## 11.7~11.20
 
-* **演示视频**: [网盘链接](https://pan.baidu.com/s/13NPiuaEbLNYH2Ojg4WWK0A), 提取码: ncph 。**打包的安卓文件**: [打包中]。
+* **演示视频**: [网盘链接](https://pan.baidu.com/s/13NPiuaEbLNYH2Ojg4WWK0A), 提取码: ncph 。**打包的安卓文件**: [网盘链接](https://pan.baidu.com/s/1iw7RXK0nRV886pYAw-zmHw) 提取码: dmgy。
 
 * **本次内容**:
   *  #### 实现角色基础的移动功能, 包括站立, 跑, 跳动作的表现。
