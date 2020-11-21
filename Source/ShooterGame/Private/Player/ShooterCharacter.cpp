@@ -4,7 +4,9 @@
 #include "ShooterGame.h"
 #include "Weapon/Weapon.h"
 #include "Weapon/WeaponGun.h"
+#include "UI/ShooterHUD.h"
 #include "Player/MyCharacterMovementComponent.h"
+#include "Player/ShooterPlayerController.h"
 
 AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UMyCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -31,17 +33,7 @@ bool AShooterCharacter::IsRunning()
 {
     return bRunning;
 }
-    
-bool AShooterCharacter::IsJumping()
-{
-    return bJumping;
-}
-    
-bool AShooterCharacter::IsCrouching()
-{
-    return bCrouching;
-}
-    
+
 float AShooterCharacter::GetTurnDirection()
 {
     return TurnDirection;
@@ -76,8 +68,6 @@ void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AShooterCharacter::OnJumpStart);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AShooterCharacter::OnJumpEnd);
-
 	PlayerInputComponent->BindAxis("MoveForward", this, &AShooterCharacter::OnMoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AShooterCharacter::OnMoveRight);
     PlayerInputComponent->BindAxis("Turn", this, &AShooterCharacter::OnTurn);
@@ -128,77 +118,26 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
-    DOREPLIFETIME(AShooterCharacter, DefaultGun);
-    DOREPLIFETIME(AShooterCharacter, DefaultSword);
     DOREPLIFETIME(AShooterCharacter, bRunning);
-    DOREPLIFETIME(AShooterCharacter, bJumping);
-    DOREPLIFETIME(AShooterCharacter, bCrouching);
     DOREPLIFETIME(AShooterCharacter, TurnDirection);
-    DOREPLIFETIME(AShooterCharacter, DefaultGun);
-}
-
-void AShooterCharacter::OnCreateDefaultWeapon()
-{
-    ServerCreateDefaultWeapon();
-}
-
-void AShooterCharacter::ServerCreateDefaultWeapon_Implementation()
-{
-    if(DefaultGunClass)
-    {
-        FTransform SpawnTransform(GetActorRotation(), GetActorLocation());
-        DefaultGun = Cast<AWeapon>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DefaultGunClass, SpawnTransform));
-        if(DefaultGun)
-        {
-            DefaultGun->SetOwnerCharacter(this);
-            //for rpcs
-            DefaultGun->SetOwner(this);
-            UGameplayStatics::FinishSpawningActor(DefaultGun, SpawnTransform);
-        }
-    }
-    
-    if(DefaultSwordClass)
-    {
-        FTransform SpawnTransform(GetActorRotation(), GetActorLocation());
-        DefaultSword = Cast<AWeapon>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, DefaultSwordClass, SpawnTransform));
-        if(DefaultSword)
-        {
-            DefaultSword->SetOwnerCharacter(this);
-            //for rpcs
-            DefaultSword->SetOwner(this);
-            UGameplayStatics::FinishSpawningActor(DefaultSword, SpawnTransform);
-        }
-    }
-    
-    CurrentWeapon = NULL;
+    DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly)
 }
 
 void AShooterCharacter::OnCrouchStart()
 {
-    bCrouching = true;
-    ServerSetCrouching(true);
+    Crouch();
 }
     
 void AShooterCharacter::OnCrouchEnd()
 {
-    bCrouching = false;
-    ServerSetCrouching(false);
+    UnCrouch();
 }
     
 void AShooterCharacter::OnJumpStart()
 {
-    bJumping = true;
-    ServerSetJumping(true);
     Jump();
 }
-    
-void AShooterCharacter::OnJumpEnd()
-{
-    bJumping = false;
-    ServerSetJumping(false);
-    StopJumping();
-}
-    
+
 void AShooterCharacter::OnRunStart()
 {
     bRunning = true;
@@ -245,16 +184,6 @@ void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
     bRunning = Value;
 }
     
-void AShooterCharacter::ServerSetJumping_Implementation(bool Value)
-{
-    bJumping = Value;
-}
-
-void AShooterCharacter::ServerSetCrouching_Implementation(bool Value)
-{
-    bCrouching = Value;
-}
-    
 void AShooterCharacter::ServerSetViewMode_Implementation(bool Value)
 {
     bUseControllerRotationYaw = !Value;
@@ -293,24 +222,11 @@ void AShooterCharacter::OnStartReload()
 void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon)
 {
     CurrentWeapon = NewWeapon;
-}
-
-void AShooterCharacter::OnEquipGun()
-{
-    if(DefaultGun)
-    {
-        DefaultGun->StartEquip();
+    if(NewWeapon){
+        NewWeapon->SetOwnerCharacter(this);
+        NewWeapon->SetOwner(this);
     }
-    ServerSetCurrentWeapon(DefaultGun);
-}
-
-void AShooterCharacter::OnEquipSword()
-{
-    if(DefaultSword)
-    {
-        DefaultSword->StartEquip();
-    }
-    ServerSetCurrentWeapon(DefaultSword);
+    OnRep_CurrentWeapon();
 }
 
 void AShooterCharacter::OnUnEquip()
@@ -330,5 +246,48 @@ int AShooterCharacter::GetCurrentWeaponType()
     }
     else{
         return 0;
+    }
+}
+
+void AShooterCharacter::OnRep_PickUpWeapon()
+{
+    //only display pick up option on character's owner client
+    if(IsLocallyControlled())
+    {
+        AShooterPlayerController* MyShooterPlayerController = Cast<AShooterPlayerController>(GetController());
+        AShooterHUD* MyShooterHUD = MyShooterPlayerController?(Cast<AShooterHUD>(MyShooterPlayerController->GetHUD())):NULL;
+        if(MyShooterHUD){
+            if(PickUpWeapon)
+            {
+                MyShooterHUD->OnPickUpWeaponChange(PickUpWeapon->GetWeaponName());
+            }
+            else
+            {
+                FString NoPickUp = FString::Printf(TEXT(""));
+                MyShooterHUD->OnPickUpWeaponChange(NoPickUp);
+            }
+        }
+    }
+}
+
+void AShooterCharacter::SetPickUpWeapon(AWeapon* NewPickUpWeapon)
+{
+    PickUpWeapon = NewPickUpWeapon;
+}
+
+//todo: modify to on rep...
+void AShooterCharacter::OnPickUp()
+{
+    if(PickUpWeapon && !PickUpWeapon->HasOwner())
+    {
+        ServerSetCurrentWeapon(PickUpWeapon);
+    }
+}
+
+void AShooterCharacter::OnRep_CurrentWeapon()
+{
+    if(CurrentWeapon)
+    {
+        CurrentWeapon->HandleEquip(false);
     }
 }

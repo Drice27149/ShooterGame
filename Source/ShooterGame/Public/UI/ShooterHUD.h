@@ -31,4 +31,7 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
     void NotifyTimeChange(const FString& NewTime);
+    
+    UFUNCTION(BlueprintImplementableEvent, Category = "PickUpWeapon")
+    void OnPickUpWeaponChange(const FString& NewWeaponName);
 };

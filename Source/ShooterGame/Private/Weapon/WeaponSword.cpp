@@ -4,7 +4,8 @@
 #include "ShooterGame.h"
 #include "Player/ShooterCharacter.h"
 
-AWeaponSword::AWeaponSword(){
+AWeaponSword::AWeaponSword()
+{
     bReplicates = true;
     bCanCombo = true;
     NextCombo = 0;

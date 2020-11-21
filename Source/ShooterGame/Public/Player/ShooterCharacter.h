@@ -17,16 +17,10 @@ public:
     bool IsRunning();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
-    bool IsJumping();
-    
-    UFUNCTION(BlueprintCallable, Category = "StateMachine")
-    bool IsCrouching();
+    bool IsViewMode();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     float GetTurnDirection();
-    
-    UFUNCTION(BlueprintCallable, Category = "StateMachine")
-    bool IsViewMode();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     FRotator GetAimOffset();
@@ -39,6 +33,9 @@ public:
     float GetRunSpeedMultiplier();
     
     float PlayCharacterMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1.0f);
+    
+    /** server **/
+    void SetPickUpWeapon(AWeapon* NewPickUpWeapon);
 
 protected:
 
@@ -51,13 +48,7 @@ protected:
     void OnCrouchEnd();
 
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnCreateDefaultWeapon();
-
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnJumpStart();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnJumpEnd();
 
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
 	void OnMoveForward(float Value);
@@ -90,42 +81,21 @@ protected:
     void OnStartReload();
     
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnEquipGun();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnEquipSword();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnUnEquip();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnPickUp();
+    
 private:
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
     AWeapon* CurrentWeapon;
-    
-    UPROPERTY(Replicated)
-    AWeapon* DefaultGun;
-    
-    UPROPERTY(Replicated)
-    AWeapon* DefaultSword;
 
     UPROPERTY(Replicated)
     bool bRunning = false;
     
-    UPROPERTY(Replicated)
-    bool bCrouching = false;
-    
-    UPROPERTY(Replicated)
-    bool bJumping = false;
-    
     /** -1: Turning left, 0: Not turning, 1: Turning Right **/
     UPROPERTY(Replicated)
     float TurnDirection = 0.0f;
-
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<AWeapon> DefaultGunClass;
-
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<AWeapon> DefaultSwordClass;
 
     /**Multicast**/
     UFUNCTION(Reliable, NetMulticast)
@@ -133,19 +103,10 @@ private:
     
     /**Server**/    //todo: simplify these code by using Acharacter
     UFUNCTION(Reliable, Server)
-    void ServerCreateDefaultWeapon();
-    
-    UFUNCTION(Reliable, Server)
     void ServerSetCurrentWeapon(AWeapon* NewWeapon);
     
     UFUNCTION(Reliable, Server)
     void ServerSetRunning(bool Value);
-    
-    UFUNCTION(Reliable, Server)
-    void ServerSetJumping(bool Value);
-    
-    UFUNCTION(Reliable, Server)
-    void ServerSetCrouching(bool Value);
     
     UFUNCTION(Reliable, Server)
     void ServerSetViewMode(bool Value);
@@ -153,12 +114,24 @@ private:
     UFUNCTION(Reliable, Server)
     void ServerSetTurnDirection(float Value);
     
+    UFUNCTION()
+    void OnRep_PickUpWeapon();
+    
+    UFUNCTION()
+    void OnRep_CurrentWeapon();
+    
 protected:
+    UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_PickUpWeapon)
+    AWeapon* PickUpWeapon;
+
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float RunSpeedMultiplier;
     
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float WalkSpeedMultiplier;
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void FireTest(int signal);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };
