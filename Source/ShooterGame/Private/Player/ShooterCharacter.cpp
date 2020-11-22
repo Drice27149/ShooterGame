@@ -178,6 +178,11 @@ void AShooterCharacter::OnLookUp(float Value)
         AddControllerPitchInput(Value);
     }
 }
+
+void AShooterCharacter::OnDrop()
+{
+    ServerDropCurrentWeapon();
+}
     
 void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
 {
@@ -221,20 +226,18 @@ void AShooterCharacter::OnStartReload()
 
 void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon)
 {
+    AWeapon* LastWeapon = CurrentWeapon;
     CurrentWeapon = NewWeapon;
+    //if new weapon is picked up, need to set it's owner
     if(NewWeapon){
         NewWeapon->SetOwnerCharacter(this);
         NewWeapon->SetOwner(this);
     }
-    OnRep_CurrentWeapon();
+    OnRep_CurrentWeapon(LastWeapon);
 }
 
 void AShooterCharacter::OnUnEquip()
 {
-    if(CurrentWeapon)
-    {
-        CurrentWeapon->StartUnEquip();
-    }
     ServerSetCurrentWeapon(NULL);
 }
 
@@ -275,7 +278,6 @@ void AShooterCharacter::SetPickUpWeapon(AWeapon* NewPickUpWeapon)
     PickUpWeapon = NewPickUpWeapon;
 }
 
-//todo: modify to on rep...
 void AShooterCharacter::OnPickUp()
 {
     if(PickUpWeapon && !PickUpWeapon->HasOwner())
@@ -284,10 +286,34 @@ void AShooterCharacter::OnPickUp()
     }
 }
 
-void AShooterCharacter::OnRep_CurrentWeapon()
+void AShooterCharacter::OnRep_CurrentWeapon(AWeapon* LastWeapon)
+{
+    if(LastWeapon){
+        //Unequip last weapon
+        if(LastWeapon->HasOwner())
+        {
+            LastWeapon->OnUnEquip();
+        }
+        //drop last weapon
+        else
+        {
+            LastWeapon->OnDrop();
+        }
+    }
+    
+    if(CurrentWeapon)
+    {
+        CurrentWeapon->OnEquip();
+    }
+}
+
+void AShooterCharacter::ServerDropCurrentWeapon_Implementation()
 {
     if(CurrentWeapon)
     {
-        CurrentWeapon->HandleEquip(false);
+        CurrentWeapon->SetOwnerCharacter(NULL);
+        AWeapon* LastWeapon = CurrentWeapon;
+        CurrentWeapon = NULL;
+        OnRep_CurrentWeapon(LastWeapon);
     }
 }

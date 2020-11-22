@@ -7,16 +7,10 @@
 AWeaponSword::AWeaponSword()
 {
     bReplicates = true;
+    SetReplicateMovement(true);
+    
     bCanCombo = true;
     NextCombo = 0;
-}
-
-void AWeaponSword::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    
-    DOREPLIFETIME(AWeaponSword, bCanCombo);
-    DOREPLIFETIME(AWeaponSword, NextCombo);
 }
 
 bool AWeaponSword::CanFire()
@@ -54,6 +48,15 @@ void AWeaponSword::HandleFiring(bool bfromReplication)
         }
     }
 }
+
+void AWeaponSword::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    
+    DOREPLIFETIME(AWeaponSword, bCanCombo);
+    DOREPLIFETIME(AWeaponSword, NextCombo);
+}
+
 
 void AWeaponSword::EnableCombo()
 {

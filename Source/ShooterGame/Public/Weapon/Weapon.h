@@ -16,31 +16,30 @@ class SHOOTERGAME_API AWeapon : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AWeapon();
     
     virtual void BeginPlay() override;
     
     void StartFire();
     
-    void StartEquip();
+    void OnEquip();
     
-    void StartUnEquip();
+    void OnUnEquip();
     
-    /** server only, becuase OwnerCharacter is a replicated property **/
+    void OnDrop();
+    
     void SetOwnerCharacter(AShooterCharacter* NewOwnerCharacter);
-
-    virtual bool CanFire();
-
-    virtual int GetWeaponTypeId();
     
     bool HasOwner();
     
     FString GetWeaponName();
     
-    void HandleEquip(bool bfromReplication);
+    /** will be overridden by subclass **/
+    virtual bool CanFire();
+
+    virtual int GetWeaponTypeId();
     
-    void HandleUnEquip(bool bfromReplication);
+    virtual void HandleFiring(bool bfromReplication);
     
 protected:
     /** replicate for calling cosmetic function on owner character **/
@@ -86,25 +85,9 @@ private:
     UFUNCTION(Reliable, NetMulticast)
     void MultiCastHandleFiring();
     
-    UFUNCTION(Reliable, Server)
-    void ServerHandleEquip();
-    
-    UFUNCTION(Reliable, NetMulticast)
-    void MultiCastHandleEquip();
-    
-    UFUNCTION(Reliable, Server)
-    void ServerHandleUnEquip();
-    
-    UFUNCTION(Reliable, NetMulticast)
-    void MultiCastHandleUnEquip();
-    
-    virtual void HandleFiring(bool bfromReplication);
-    
-    /** server **/
     UFUNCTION()
     void OnWeaponOverlapBegin(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const struct FHitResult& SweepResult);
 
-    /** server **/
     UFUNCTION()
     void OnWeaponOverlapEnd(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

@@ -16,13 +16,14 @@ class SHOOTERGAME_API AWeaponSword : public AWeapon
 	
 public:	
 	AWeaponSword();
+    
     //override from Aweapon
     virtual bool CanFire() override;
 
     virtual int GetWeaponTypeId() override;
     
     virtual void HandleFiring(bool bfromReplication) override;   
-     
+
 protected:
     UPROPERTY(EditDefaultsOnly, Category = "Sword data")
     int MaxCombo;

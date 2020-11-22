@@ -86,6 +86,9 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnPickUp();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnDrop();
+    
 private:
     UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
     AWeapon* CurrentWeapon;
@@ -101,9 +104,12 @@ private:
     UFUNCTION(Reliable, NetMulticast)
     void MulticastSetViewMode(bool Value);
     
-    /**Server**/    //todo: simplify these code by using Acharacter
+    /**Server**/
     UFUNCTION(Reliable, Server)
     void ServerSetCurrentWeapon(AWeapon* NewWeapon);
+    
+    UFUNCTION(Reliable, Server)
+    void ServerDropCurrentWeapon();
     
     UFUNCTION(Reliable, Server)
     void ServerSetRunning(bool Value);
@@ -118,7 +124,7 @@ private:
     void OnRep_PickUpWeapon();
     
     UFUNCTION()
-    void OnRep_CurrentWeapon();
+    void OnRep_CurrentWeapon(AWeapon* LastWeapon);
     
 protected:
     UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_PickUpWeapon)

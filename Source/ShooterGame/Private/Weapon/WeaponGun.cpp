@@ -13,56 +13,10 @@ AWeaponGun::AWeaponGun()
     FirePointComp->SetupAttachment(RootComponent);
     
     bReplicates = true;
+    SetReplicateMovement(true);
     
     BulletCount = MaxBulletCount;
 } 
-
-void AWeaponGun::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    
-    DOREPLIFETIME(AWeaponGun, BulletCount);
-}
-
-void AWeaponGun::StartReload(bool bRemoteClient)
-{
-    if(bRemoteClient && OwnerCharacter && OwnerCharacter->IsLocallyControlled())
-    {
-        //do nothing because it is a call back on local
-    }
-    else{
-        // local
-        if(!bRemoteClient && GetLocalRole() < ROLE_Authority)
-        {
-            ServerStartReload();
-        }
-        
-        // server
-        if(GetLocalRole() == ROLE_Authority)
-        {
-            BulletCount = MaxBulletCount;
-        }
-        
-        // all
-        if(OwnerCharacter)
-        {
-            OwnerCharacter->PlayCharacterMontage(PawnReloadAnimation);
-            PlayWeaponMontage(WeaponReloadAnimation);
-        } 
-    }
-}
-
-void AWeaponGun::ServerStartReload_Implementation()
-{
-    StartReload();
-    // call cosmetic function on remote client
-    MulticastStartReload();
-}
-
-void AWeaponGun::MulticastStartReload_Implementation()
-{
-    StartReload(true);
-}
 
 bool AWeaponGun::CanFire()
 {
@@ -100,7 +54,7 @@ void AWeaponGun::HandleFiring(bool bfromReplication)
             }
         }
     }
-    
+    //client
     if(GetLocalRole() != ROLE_Authority)
     {
         if(OwnerCharacter){
@@ -108,4 +62,46 @@ void AWeaponGun::HandleFiring(bool bfromReplication)
             PlayWeaponMontage(FireMontage_Weapon);
         }
     }
+}
+
+
+void AWeaponGun::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    
+    DOREPLIFETIME(AWeaponGun, BulletCount);
+}
+
+void AWeaponGun::StartReload()
+{
+    ServerStartReload();
+}
+
+void AWeaponGun::HandleReload(bool bfromReplication)
+{
+    //server
+    if(GetLocalRole() == ROLE_Authority && !bfromReplication)
+    {
+        BulletCount = MaxBulletCount;
+    }
+    //client
+    if(GetLocalRole() != ROLE_Authority)
+    {
+        if(OwnerCharacter)
+        {
+            OwnerCharacter->PlayCharacterMontage(PawnReloadAnimation);
+            PlayWeaponMontage(WeaponReloadAnimation);
+        } 
+    }
+}
+
+void AWeaponGun::ServerStartReload_Implementation()
+{
+    HandleReload(false);
+    MulticastStartReload();
+}
+
+void AWeaponGun::MulticastStartReload_Implementation()
+{
+    HandleReload(true);
 }

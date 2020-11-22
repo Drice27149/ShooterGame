@@ -14,14 +14,14 @@ class SHOOTERGAME_API AWeaponGun : public AWeapon
 public:	
 	AWeaponGun();
     
-    void StartReload(bool bRemoteClient = false);
-    
     //override from Aweapon
     virtual bool CanFire() override;
 
     virtual int GetWeaponTypeId() override;
     
     virtual void HandleFiring(bool bfromReplication) override;    
+    
+    void StartReload();
 
 protected:
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "BulletCount")
@@ -50,8 +50,9 @@ protected:
 private:
     UFUNCTION(Reliable, Server)
     void ServerStartReload();
-
-    // cosmetice function on remote client
+    
     UFUNCTION(Reliable, NetMulticast)
     void MulticastStartReload();
+    
+    void HandleReload(bool bfromReplication);
 };
