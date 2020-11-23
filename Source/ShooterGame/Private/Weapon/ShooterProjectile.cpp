@@ -62,12 +62,18 @@ void AShooterProjectile::Destroyed()
 
 void AShooterProjectile::OnProjectileImpact(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    /* instigator = null here */
-//	if (OtherActor)
-//	{	
-//		UGameplayStatics::ApplyPointDamage(OtherActor, Damage, NormalImpulse, Hit, GetInstigator()->Controller, this, DamageType);
-//	}
+    if(GetLocalRole() == ROLE_Authority)
+    {
+        if (OtherActor)
+        {
+            AShooterCharacter* OtherCharacter = Cast<AShooterCharacter>(OtherActor);
+            if(OtherCharacter)
+            {
+                OtherCharacter->PlayHit(this, GetActorForwardVector(), (Hit.BoneName).ToString());
+            }
+        }
 
-	Destroy();
+        Destroy();
+    }
 }
 

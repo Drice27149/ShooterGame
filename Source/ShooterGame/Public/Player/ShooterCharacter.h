@@ -7,6 +7,28 @@
 #include "ShooterCharacter.generated.h"
 
 class AWeapon;
+class UAnimMontage;
+
+USTRUCT()
+struct FTakeHitInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+    UPROPERTY()
+    int8 HitDirection;
+    
+    UPROPERTY()
+    int8 HitCounter;
+    
+    //todo: hit status
+    //block/hit/blow away/death
+
+	FTakeHitInfo()
+    {
+        HitDirection = 0;
+        HitCounter = 0;
+    }
+};
 
 UCLASS(config=Game)
 class AShooterCharacter : public ACharacter
@@ -36,6 +58,8 @@ public:
     
     /** server **/
     void SetPickUpWeapon(AWeapon* NewPickUpWeapon);
+    
+    void PlayHit(AActor* OtherActor, FVector HitVector, FString HitBoneName);
 
 protected:
 
@@ -100,6 +124,9 @@ private:
     UPROPERTY(Replicated)
     float TurnDirection = 0.0f;
 
+    UPROPERTY(ReplicatedUsing = OnRep_LastHitInfo)
+    FTakeHitInfo LastHitInfo;
+
     /**Multicast**/
     UFUNCTION(Reliable, NetMulticast)
     void MulticastSetViewMode(bool Value);
@@ -126,9 +153,17 @@ private:
     UFUNCTION()
     void OnRep_CurrentWeapon(AWeapon* LastWeapon);
     
+    UFUNCTION()
+    void OnRep_LastHitInfo();
+    
+    void SimulateHit();
+    
 protected:
     UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_PickUpWeapon)
     AWeapon* PickUpWeapon;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Montage")
+    UAnimMontage* TakeHitMontage[5];
 
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float RunSpeedMultiplier;
@@ -138,6 +173,9 @@ protected:
 
     UFUNCTION(BlueprintImplementableEvent)
     void FireTest(int signal);
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void FireVector(FVector a, FVector b, FVector2D c, FVector2D d, float e);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };

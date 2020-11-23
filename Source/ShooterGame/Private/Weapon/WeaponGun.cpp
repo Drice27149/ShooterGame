@@ -50,6 +50,7 @@ void AWeaponGun::HandleFiring(bool bfromReplication)
             if(SpawnedProjectile != NULL)
             {
                 SpawnedProjectile->OwnerCharacter = OwnerCharacter;
+                SpawnedProjectile->SetInstigator(OwnerCharacter);
                 UGameplayStatics::FinishSpawningActor(SpawnedProjectile, SpawnTransform);
             }
         }

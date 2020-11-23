@@ -32,6 +32,8 @@ void AWeapon::BeginPlay(){
 void AWeapon::SetOwnerCharacter(AShooterCharacter* NewOwnerCharacter)
 {
     OwnerCharacter = NewOwnerCharacter;
+    SetOwner(NewOwnerCharacter);
+    SetInstigator(NewOwnerCharacter);
 }
 
 void AWeapon::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -71,7 +73,7 @@ void AWeapon::OnEquip()
 {
     if(OwnerCharacter && OwnerCharacter->GetMesh()){
         //detach from inventory and attach to hand
-        DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
         AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, UsedSocket);
         //plau equip montage
         if(GetLocalRole() != ROLE_Authority)
@@ -85,7 +87,7 @@ void AWeapon::OnUnEquip()
 {
     if(OwnerCharacter && OwnerCharacter->GetMesh()){
         //detach from hand and attach to inventory
-        DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
         AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, UnUsedSocket);
         //play unequip montange
         if(GetLocalRole() != ROLE_Authority)
@@ -97,7 +99,7 @@ void AWeapon::OnUnEquip()
 
 void AWeapon::OnDrop()
 {
-    DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
+    DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 }
 
 FString AWeapon::GetWeaponName()

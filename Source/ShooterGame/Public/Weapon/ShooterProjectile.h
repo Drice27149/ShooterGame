@@ -37,6 +37,9 @@ public:
 
 	class AShooterCharacter* OwnerCharacter;
 
+    UFUNCTION(BlueprintImplementableEvent, Category = "test")
+    void FireTest(int signal);
+    
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

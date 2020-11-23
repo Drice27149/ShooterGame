@@ -120,6 +120,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
     DOREPLIFETIME(AShooterCharacter, bRunning);
     DOREPLIFETIME(AShooterCharacter, TurnDirection);
+    DOREPLIFETIME(AShooterCharacter, LastHitInfo);
     DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly)
 }
 
@@ -316,4 +317,56 @@ void AShooterCharacter::ServerDropCurrentWeapon_Implementation()
         CurrentWeapon = NULL;
         OnRep_CurrentWeapon(LastWeapon);
     }
+}
+
+void AShooterCharacter::PlayHit(AActor* HitActor, FVector HitVector, FString HitBoneName)
+{
+    //todo: add damage logic, branch: block, hit, heavy hit, death
+    //0: back, 1: front, 2: left, 3: right
+    int8 HitDirection = 0;
+    FVector ForwardVector = GetActorForwardVector();
+    FVector2D HitVector2D = FVector2D(HitVector.X, HitVector.Y);
+    FVector2D ForwardVector2D = FVector2D(ForwardVector.X, ForwardVector.Y); 
+    float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
+    //if positve, hit is from back
+    if(FVector2D::DotProduct(HitVector2D, ForwardVector2D) > 0)
+    {
+        HitDirection = 0;
+    }
+    //otherwise from front
+    else
+    {
+        bool IsLeft = HitBoneName.EndsWith(FString(TEXT("l")), ESearchCase::CaseSensitive);
+        bool IsRight = HitBoneName.EndsWith(FString(TEXT("r")), ESearchCase::CaseSensitive);
+        if(IsLeft^IsRight)
+        {
+            if(IsLeft)
+            {
+                HitDirection = 2;
+            }
+            else
+            {
+                HitDirection = 3;
+            }
+        }
+        else
+        {
+            HitDirection = 1;
+        }
+    }
+    //ensure replication of all members arrive at the same time
+    FTakeHitInfo NewHitInfo = LastHitInfo;
+    NewHitInfo.HitDirection = HitDirection;
+    NewHitInfo.HitCounter = NewHitInfo.HitCounter+1;
+    LastHitInfo = NewHitInfo;
+}
+
+void AShooterCharacter::OnRep_LastHitInfo()
+{
+    SimulateHit();
+}
+
+void AShooterCharacter::SimulateHit()
+{
+    PlayCharacterMontage(TakeHitMontage[LastHitInfo.HitDirection]);
 }
