@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "ShooterGameType.h"
 #include "ShooterCharacter.generated.h"
 
 class AWeapon;
@@ -15,16 +16,17 @@ struct FTakeHitInfo
 	GENERATED_USTRUCT_BODY()
 
     UPROPERTY()
+    EHitType HitType;
+
+    UPROPERTY()
     int8 HitDirection;
     
     UPROPERTY()
     int8 HitCounter;
-    
-    //todo: hit status
-    //block/hit/blow away/death
 
 	FTakeHitInfo()
     {
+        HitType = EHitType::NormalHit;
         HitDirection = 0;
         HitCounter = 0;
     }
@@ -59,7 +61,7 @@ public:
     /** server **/
     void SetPickUpWeapon(AWeapon* NewPickUpWeapon);
     
-    void PlayHit(AActor* OtherActor, FVector HitVector, FString HitBoneName);
+    void PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FString HitBoneName);
 
 protected:
 

@@ -319,46 +319,49 @@ void AShooterCharacter::ServerDropCurrentWeapon_Implementation()
     }
 }
 
-void AShooterCharacter::PlayHit(AActor* HitActor, FVector HitVector, FString HitBoneName)
+void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FString HitBoneName)
 {
-    //todo: add damage logic, branch: block, hit, heavy hit, death
-    //0: back, 1: front, 2: left, 3: right
-    int8 HitDirection = 0;
-    FVector ForwardVector = GetActorForwardVector();
-    FVector2D HitVector2D = FVector2D(HitVector.X, HitVector.Y);
-    FVector2D ForwardVector2D = FVector2D(ForwardVector.X, ForwardVector.Y); 
-    float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
-    //if positve, hit is from back
-    if(FVector2D::DotProduct(HitVector2D, ForwardVector2D) > 0)
+    if(HitType==EHitType::NormalHit)
     {
-        HitDirection = 0;
-    }
-    //otherwise from front
-    else
-    {
-        bool IsLeft = HitBoneName.EndsWith(FString(TEXT("l")), ESearchCase::CaseSensitive);
-        bool IsRight = HitBoneName.EndsWith(FString(TEXT("r")), ESearchCase::CaseSensitive);
-        if(IsLeft^IsRight)
+        //0: back, 1: front, 2: left, 3: right
+        int8 HitDirection = 0;
+        FVector ForwardVector = GetActorForwardVector();
+        FVector2D HitVector2D = FVector2D(HitVector.X, HitVector.Y);
+        FVector2D ForwardVector2D = FVector2D(ForwardVector.X, ForwardVector.Y); 
+        float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
+        //if positve, hit is from back
+        if(FVector2D::DotProduct(HitVector2D, ForwardVector2D) > 0)
         {
-            if(IsLeft)
+            HitDirection = 0;
+        }
+        //otherwise from front
+        else
+        {
+            bool IsLeft = HitBoneName.EndsWith(FString(TEXT("l")), ESearchCase::CaseSensitive);
+            bool IsRight = HitBoneName.EndsWith(FString(TEXT("r")), ESearchCase::CaseSensitive);
+            if(IsLeft^IsRight)
             {
-                HitDirection = 2;
+                HitDirection = IsLeft?2:3;
             }
             else
             {
-                HitDirection = 3;
+                HitDirection = 1;
             }
         }
-        else
+        //ensure replication of all members arrive at the same time
+        FTakeHitInfo NewHitInfo = LastHitInfo;
+        NewHitInfo.HitDirection = HitDirection;
+        NewHitInfo.HitCounter = NewHitInfo.HitCounter+1;
+        LastHitInfo = NewHitInfo;
+    }
+    else
+    {
+        UCharacterMovementComponent* MyCharacterMovement = Cast<UCharacterMovementComponent>(GetCharacterMovement());
+        if(MyCharacterMovement)
         {
-            HitDirection = 1;
+            MyCharacterMovement->AddImpulse(HitImpulse, false);
         }
     }
-    //ensure replication of all members arrive at the same time
-    FTakeHitInfo NewHitInfo = LastHitInfo;
-    NewHitInfo.HitDirection = HitDirection;
-    NewHitInfo.HitCounter = NewHitInfo.HitCounter+1;
-    LastHitInfo = NewHitInfo;
 }
 
 void AShooterCharacter::OnRep_LastHitInfo()

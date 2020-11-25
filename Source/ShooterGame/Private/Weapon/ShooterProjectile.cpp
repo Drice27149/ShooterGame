@@ -3,6 +3,7 @@
 
 #include "Weapon/ShooterProjectile.h"
 #include "ShooterGame.h"
+#include "ShooterGameType.h"
 #include "Player/ShooterCharacter.h"
 
 
@@ -69,7 +70,7 @@ void AShooterProjectile::OnProjectileImpact(UPrimitiveComponent* HitComponent, A
             AShooterCharacter* OtherCharacter = Cast<AShooterCharacter>(OtherActor);
             if(OtherCharacter)
             {
-                OtherCharacter->PlayHit(this, GetActorForwardVector(), (Hit.BoneName).ToString());
+                OtherCharacter->PlayHit(this, EHitType::NormalHit, 0, GetActorForwardVector(), FVector(0,0,0), (Hit.BoneName).ToString());
             }
         }
 
