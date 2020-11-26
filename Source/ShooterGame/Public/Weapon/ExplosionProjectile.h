@@ -7,6 +7,8 @@
 
 class USphereComponent;
 class UParticleSystem;
+class URadialForceComponent;
+class UPrimitiveComponent;
 
 UCLASS()
 class AExplosionProjectile : public AActor
@@ -19,11 +21,14 @@ public:
     virtual void Tick(float DeltaTime) override;
     
 protected:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    UPROPERTY(EditDefaultsOnly)
     USphereComponent* CollisionComp;
     
     UPROPERTY(EditDefaultsOnly)
     USphereComponent* DetectionComp;
+    
+    UPROPERTY(EditDefaultsOnly)
+    URadialForceComponent* RadialForceComp;
     
     UPROPERTY(EditDefaultsOnly)
     UParticleSystem* ExplosionEffect;
@@ -34,6 +39,9 @@ protected:
     UPROPERTY(EditDefaultsOnly)
     float ExplodeImpulseScale;
     
+    UPROPERTY(EditDefaultsOnly)
+    float ExplosionSpeed;
+    
     UFUNCTION(BlueprintImplementableEvent)
     void OnExplode();
     
@@ -43,11 +51,16 @@ protected:
     UFUNCTION(BlueprintImplementableEvent)
     void OnHitActors(const TArray<AActor*>& HitActors);
     
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnHitOtherActor(AActor* OtherActor);
+    
     virtual void BeginPlay() override;
     
     virtual void Destroyed() override;
     
 private:
+    bool bLaunched;
+
     void Explode();
     
     UFUNCTION()

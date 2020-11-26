@@ -9,18 +9,23 @@ AExplosionProjectile::AExplosionProjectile()
     PrimaryActorTick.bCanEverTick = true;
     bReplicates = true;
     
+    bLaunched = false;
+    
     CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
     RootComponent = CollisionComp;
     
     DetectionComp = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionComponent"));
     DetectionComp->SetupAttachment(RootComponent);
+    
+    RadialForceComp = CreateDefaultSubobject<URadialForceComponent>(TEXT("RadialForceComponent"));
+    RadialForceComp->SetupAttachment(RootComponent);
 }
 
 void AExplosionProjectile::BeginPlay()
 {
     Super::BeginPlay();
     
-    if(GetLocalRole() == ROLE_Authority)
+    if(GetLocalRole() == ROLE_Authority && CollisionComp)
     {
         CollisionComp->OnComponentHit.AddDynamic(this, &AExplosionProjectile::OnExplosionProjectileHit);
     }
@@ -28,14 +33,12 @@ void AExplosionProjectile::BeginPlay()
 
 void AExplosionProjectile::OnExplosionProjectileHit(UPrimitiveComponent* HitComponent,AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    FireTest(0);
+    OnHitOtherActor(OtherActor);
     if(GetLocalRole() == ROLE_Authority)
     {
-        FireTest(1);
         AShooterCharacter* OtherCharacter = Cast<AShooterCharacter>(OtherActor);
         if(OtherCharacter)
         {
-            FireTest(2);
             Explode();
         }
     }
@@ -43,18 +46,14 @@ void AExplosionProjectile::OnExplosionProjectileHit(UPrimitiveComponent* HitComp
 
 void AExplosionProjectile::Explode()
 {
-    FireTest(3);
-    //create radial force in here, for non character actor
-    OnExplode();
+    if(RadialForceComp)
+    {
+        RadialForceComp->FireImpulse();
+    }
     
     TArray<AActor*> HitActors;
-    DetectionComp->GetOverlappingActors(HitActors,AShooterCharacter::StaticClass());
-
-    FireTest(4);
-    //debug
-    OnHitActors(HitActors);
+    DetectionComp->GetOverlappingActors(HitActors,AActor::StaticClass());
     
-    FireTest(5);
     for(AActor* HitActor: HitActors)
     {
         AShooterCharacter* HitCharacter = Cast<AShooterCharacter>(HitActor);
@@ -66,17 +65,14 @@ void AExplosionProjectile::Explode()
         }
     }
 
-    FireTest(6);
     Destroy();
 }
 
 
 void AExplosionProjectile::Destroyed()
 {
-    FireTest(7);
     if(ExplosionEffect != NULL)
     {
-        FireTest(8);
         FVector spawnLocation = GetActorLocation();
         UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionEffect, spawnLocation, FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
     }
@@ -85,5 +81,18 @@ void AExplosionProjectile::Destroyed()
 void AExplosionProjectile::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    
+    if(GetLocalRole() == ROLE_Authority)
+    {
+        float CurrentSpeed = GetVelocity().Size();
+        if(bLaunched && CurrentSpeed < ExplosionSpeed)
+        {
+            Explode();
+        }
+        else if(CurrentSpeed > ExplosionSpeed)
+        {
+            bLaunched = true;
+        }
+    }
 }
 

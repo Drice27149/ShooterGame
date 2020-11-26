@@ -323,6 +323,8 @@ void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitD
 {
     if(HitType==EHitType::NormalHit)
     {
+        //debug only
+        FireSound(HitBoneName);
         //0: back, 1: front, 2: left, 3: right
         int8 HitDirection = 0;
         FVector ForwardVector = GetActorForwardVector();

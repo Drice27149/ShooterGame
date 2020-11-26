@@ -18,4 +18,12 @@ enum class EHitDirection : uint8
     Right
 };
 
+UENUM(BlueprintType)
+enum class EHWeaponType : uint8 
+{
+    Rifle,
+    Launcher,
+    Sword
+};
+
 
