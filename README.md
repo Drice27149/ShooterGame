@@ -2,11 +2,9 @@
 
 ## 10.31~11.6
 
-* 演示视频
+* **演示视频**: [链接](https://pan.baidu.com/s/1ahcAQAQgudyXFP-kaagy7Q)，提取码: xd8w
 
-  [链接](https://pan.baidu.com/s/1ahcAQAQgudyXFP-kaagy7Q)，提取码: xd8w
-
-* 本周内容
+* **本周内容**
 
   增加角色信息的显示, 得分的显示。
 
@@ -54,13 +52,13 @@
   * **实现枪械的pick功能**。
 
     * 我实现的效果为靠近场景中的武器之后会弹出pick up窗口, 点击pick up可以把武器装备, 点击drop可以把当前装备的武器卸下。
-  * 检测附近武器的原理是给武器注册```OnComponentBeginOverlap```和```OnComponentEndOverlap```事件,。
+    * 检测附近武器的原理是给武器注册```OnComponentBeginOverlap```和```OnComponentEndOverlap```事件,。
     * 捡起和卸下武器的原理是先在server端修改角色的武器数据, 然后在客户端把武器```attach```或者```detach```到角色的socket上面。
 
   * **射线枪械: 无物理弹道, 直线命中, 子弹打中角色不同部位有不同的命中反馈动画和音效**。
 
     * 此处沿用了之前写的武器开火系统, 子弹是基于```ProjectileMovementComponent```进行移动的。
-  * 击中的碰撞检测注册```OnComponentHit```事件, 击中mesh的具体骨骼名字可以在```OnComponentHit```注册的回调函数中通过```HitResult.BoneName```中获取, 角色再根据不同的骨骼名字调用不同的受击动画和音效。
+    * 击中的碰撞检测注册```OnComponentHit```事件, 击中mesh的具体骨骼名字可以在```OnComponentHit```注册的回调函数中通过```HitResult.BoneName```中获取, 角色再根据不同的骨骼名字调用不同的受击动画和音效。
   
   * **抛体枪械: 抛体命中角色立刻爆炸, 命中场景会反弹减速, 减速到一定程度后爆炸。根据不同的物理材质而改变反弹的速度反馈。爆炸效果为把一定范围内的物件和角色炸飞**。 
   
