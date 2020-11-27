@@ -1,3 +1,25 @@
+#### 2020.11.7~
+
+**遇到的问题和解决方法**
+
+虽然主题是骨骼动画, 但这次遇到的问题大多出现在网络同步方面...
+
+* 问题:
+
+  把武器attach到角色的mesh上之后, 进行俯仰时Server上的武器方向与本地的不一致, 导致了武器开火方向和瞄准方向不同的问题。
+
+  解决方法:
+
+  这个问题只会在dedicated server上出现, listen server不会。因此确定Pitch是已经正确同步的, 在[AnswerHub](https://answers.unrealengine.com/questions/49935/does-animmontage-play-on-a-dedicated-server-for-th.html)上找到的解释是dedicated server上默认是不在每个tick更新骨骼的, 进行俯仰时server上的人物骨骼没有更新, 附着在上面的武器方向自然也没有更新。需要把"Mesh Component Update Flag"选项设置为"Always Tick Pose and Refresh Bones", 改了之后问题解决。
+
+* 问题:
+
+  在武器的类方法中调用server rpc无效。
+
+  解决方法:
+
+  查看文档后得知是ownership的问题。要在客户端的actor中调用server 的rpc函数, 必须满足的条件是这个actor在网络上的owner是客户端自己, 否则调用的请求会被忽略。在创建武器之后调用```AActor::setOwner```把owner设置为任意一个本客户端拥有的actor即可, 比如玩家的character或者playercontroller。
+
 ####2020.11.23~
 
 todo:

@@ -1,4 +1,10 @@
+**最新一次的作业在最下面**
+
 ## 10.31~11.6
+
+* 演示视频
+
+  [链接](https://pan.baidu.com/s/1ahcAQAQgudyXFP-kaagy7Q)，提取码: xd8w
 
 * 本周内容
 
@@ -6,20 +12,12 @@
 
   增加基础操作的按钮。
 
-* 演示视频
-
-  [链接](https://pan.baidu.com/s/1ahcAQAQgudyXFP-kaagy7Q)，提取码: xd8w
-
-* 遇到的问题
-
-  * 由于之前写的太差, 把项目重新写了一遍, 浪费了很多时间。	
-  * 枪支和人物的射击动画还没有实现, 目前看起来不像个游戏。
-
 ## 11.7~11.20
 
 * **演示视频**: [网盘链接](https://pan.baidu.com/s/13NPiuaEbLNYH2Ojg4WWK0A), 提取码: ncph 。**打包的安卓文件**: [网盘链接](https://pan.baidu.com/s/1iw7RXK0nRV886pYAw-zmHw) 提取码: dmgy。
 
 * **本次内容**:
+  
   *  #### 实现角色基础的移动功能, 包括站立, 跑, 跳动作的表现。
      * 这些实际上都是角色动画蓝图中动画状态机的内容。在状态机中分别定义好站立(Idle), 走动(Jog), 跑动(Run), 跳(Jump)几个状态, 再添上状态之间的转移条件(一般由角色的自身数据驱动)就可以了。
      * 在每个状态之中可以根据需求选择是重复播放动画或者是使用由参数驱动的Blend Space。比如说, 如果走动和跑动是分开两个状态, 那么各自的状态播放相应的动画即可; 如果是结合到一个状态的话也可以使用由速度驱动的Blend Space。 
@@ -41,24 +39,37 @@
      * 关于角度变化时角色头部对应移动的问题, 原理和之前的俯仰一样, 都是使用Aim Offset。 不同的地方是只有头部在动, 那么使用layer blend per bone把只把颈部以上的动画进行叠加即可。
      
   * #### 为了后续多人游戏的开发, 对上述的表现都实现了网络同步。
-    * 同步的原理也并不复杂, 对于动画状态机, 只要把驱动状态机的变量(Speed, Direction, crouch, jump...)等同步了, 动画状态机的表现就自动同步了; 对于俯仰, 可以参考[官方工程ShooterGame](https://docs.unrealengine.com/en-US/Resources/SampleGames/ShooterGame/index.html)代码中的实现: 调用```APawn::GetBaseAimRotation()```可以得到一个内置同步的Pitch; 对于Montage的播放, 一个可行的方案是使用RPC, 即客户端调用Server方法, 服务器上再调用Netmulticast方法实现每个客户端同步播放。
+  
+  * 同步的原理也并不复杂, 对于动画状态机, 只要把驱动状态机的变量(Speed, Direction, crouch, jump...)等同步了, 动画状态机的表现就自动同步了; 对于俯仰, 可以参考[官方工程ShooterGame](https://docs.unrealengine.com/en-US/Resources/SampleGames/ShooterGame/index.html)代码中的实现: 调用```APawn::GetBaseAimRotation()```可以得到一个内置同步的Pitch; 对于Montage的播放, 一个可行的方案是使用RPC, 即客户端调用Server方法, 服务器上再调用Netmulticast方法实现每个客户端同步播放。
+  
 
-* **遇到的问题和解决方法**
 
-  虽然主题是骨骼动画, 但这次遇到的问题大多出现在网络同步方面...
 
-  * 问题:
+## 11.21~11.27
 
-    把武器attach到角色的mesh上之后, 进行俯仰时Server上的武器方向与本地的不一致, 导致了武器开火方向和瞄准方向不同的问题。
+* **演示视频**: [todo]. **打包的安卓文件**: [todo]
 
-    解决方法:
+* **本次内容**: 
 
-    这个问题只会在dedicated server上出现, listen server不会。因此确定Pitch是已经正确同步的, 在[AnswerHub](https://answers.unrealengine.com/questions/49935/does-animmontage-play-on-a-dedicated-server-for-th.html)上找到的解释是dedicated server上默认是不在每个tick更新骨骼的, 进行俯仰时server上的人物骨骼没有更新, 附着在上面的武器方向自然也没有更新。需要把"Mesh Component Update Flag"选项设置为"Always Tick Pose and Refresh Bones", 改了之后问题解决。
+  * **实现枪械的pick功能**。
 
-  * 问题:
+    * 我实现的效果为靠近场景中的武器之后会弹出pick up窗口, 点击pick up可以把武器装备, 点击drop可以把当前装备的武器卸下。
+  * 检测附近武器的原理是给武器注册```OnComponentBeginOverlap```和```OnComponentEndOverlap```事件,。
+    * 捡起和卸下武器的原理是先在server端修改角色的武器数据, 然后在客户端把武器```attach```或者```detach```到角色的socket上面。
 
-    在武器的类方法中调用server rpc无效。
+  * **射线枪械: 无物理弹道, 直线命中, 子弹打中角色不同部位有不同的命中反馈动画和音效**。
 
-    解决方法:
-
-    查看文档后得知是ownership的问题。要在客户端的actor中调用server 的rpc函数, 必须满足的条件是这个actor在网络上的owner是客户端自己, 否则调用的请求会被忽略。在创建武器之后调用```AActor::setOwner```把owner设置为任意一个本客户端拥有的actor即可, 比如玩家的character或者playercontroller。
+    * 此处沿用了之前写的武器开火系统, 子弹是基于```ProjectileMovementComponent```进行移动的。
+  * 击中的碰撞检测注册```OnComponentHit```事件, 击中mesh的具体骨骼名字可以在```OnComponentHit```注册的回调函数中通过```HitResult.BoneName```中获取, 角色再根据不同的骨骼名字调用不同的受击动画和音效。
+  
+  * **抛体枪械: 抛体命中角色立刻爆炸, 命中场景会反弹减速, 减速到一定程度后爆炸。根据不同的物理材质而改变反弹的速度反馈。爆炸效果为把一定范围内的物件和角色炸飞**。 
+  
+    * 子弹开启```simulate physic```和```enable gravity```, 发射时通过```AddImpulse```到子弹的```RootComponent```获得速度, 子弹就可以进行抛体运动了。
+    * 击中的碰撞检测和之前一样注册```OnComponentHit```事件的回调函数, 在函数中判断击中的actor是否角色类型, 如果是则爆炸。
+    * 不同的速度反馈可以通过新建```physic material```类并应用到物体上, 修改```physic material```的```Resititution```来改变速度反馈, 属性值越大速度的衰减越少。
+    * 速度衰减的检测在子弹的每一个```Tick```中进行, 如果```GetVelocity().Size()```的结果过小则爆炸。
+    * 炸飞效果实现方式有很多, 我使用的是给子弹增加一个```RadialForceComponent```组件, 在爆炸的时候调用```FireImulse```方法给爆炸的球型区域中的物体施加冲量, 达到炸飞的效果。
+    
+    
+    
+    

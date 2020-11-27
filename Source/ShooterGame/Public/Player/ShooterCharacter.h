@@ -177,7 +177,7 @@ protected:
     void FireTest(int signal);
 
     UFUNCTION(BlueprintImplementableEvent)
-    void FireSound(FString BoneName);
+    void FireSound(const FString& BoneName);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };
