@@ -45,7 +45,7 @@
 
 ## 11.21~11.27
 
-* **演示视频**: [网盘链接](https://pan.baidu.com/s/1IoK7074rncVgkT_575BjDQ), 提取码: mfxj. **打包的安卓文件**: [打包中]
+* **演示视频**: [网盘链接](https://pan.baidu.com/s/1IoK7074rncVgkT_575BjDQ), 提取码: mfxj. **打包的安卓文件**: [链接](https://pan.baidu.com/s/1_SZWpLjT6kAt_l4vs-e_sg) 提取码: wfgb
 
 * **本次内容**: 
 
