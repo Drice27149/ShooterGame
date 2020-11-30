@@ -32,8 +32,8 @@ public:
 	TSubclassOf<class UDamageType> DamageType;
 
 	//The damage dealt by this projectile.
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
-	float Damage;
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	float ProjectileDamage;
 
 	class AShooterCharacter* OwnerCharacter;
 

@@ -23,12 +23,16 @@ struct FTakeHitInfo
     
     UPROPERTY()
     int8 HitCounter;
+    
+    UPROPERTY()
+    bool bDeath;
 
 	FTakeHitInfo()
     {
         HitType = EHitType::NormalHit;
         HitDirection = 0;
         HitCounter = 0;
+        bDeath = false;
     }
 };
 
@@ -37,6 +41,8 @@ class AShooterCharacter : public ACharacter
 {
 	GENERATED_UCLASS_BODY()
 public:
+    virtual void BeginPlay() override;
+
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     bool IsRunning();
     
@@ -120,6 +126,12 @@ private:
     AWeapon* CurrentWeapon;
 
     UPROPERTY(Replicated)
+    float Health;
+    
+    UPROPERTY(EditDefaultsOnly)
+    float MaxHealth;
+
+    UPROPERTY(Replicated)
     bool bRunning = false;
     
     /** -1: Turning left, 0: Not turning, 1: Turning Right **/
@@ -158,7 +170,11 @@ private:
     UFUNCTION()
     void OnRep_LastHitInfo();
     
+    void OnDeath();
+    
     void SimulateHit();
+    
+    void SimulateDeath();
     
 protected:
     UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_PickUpWeapon)
@@ -172,6 +188,9 @@ protected:
     
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float WalkSpeedMultiplier;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "RespawnTime")
+    float RespawnTime;
 
     UFUNCTION(BlueprintImplementableEvent)
     void FireTest(int signal);

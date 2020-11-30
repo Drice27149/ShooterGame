@@ -1,7 +1,5 @@
 #### 2020.11.7~
 
-**遇到的问题和解决方法**
-
 虽然主题是骨骼动画, 但这次遇到的问题大多出现在网络同步方面...
 
 * 问题:
@@ -66,4 +64,73 @@ todo:
   * treat character and other actor differently
     * for character, input the impulse done
     * for give me the blueprint event and done
+
+#### 2020.11.29~
+
+* todo: 
+  * health & death & respawn system
+    * use ragdoll to implement death
+    * physic animation(?) on projectile hit, seems like a good idea, will look into physic asset for more detail
+  * will finish health & respawn first
+  * then consider hit reaction & ragdoll
+
+#### 2020.11.30~
+
+* todo(priority from high to low): 
+
+  * health &  death & ragdoll
+
+    * health & ragdoll & death & respawn
+
+      ```c++
+      //Shooter
+      
+      UPROPERTY(Replicated)
+      float Health
+      
+      void PlayHit(xxx, xxx){
+          Health -= HitDamage;
+      }
+      
+      void OnRep_lastHit(){
+          if(Health>0){
+           	SimulateHit();   
+          }
+          else{
+           	SimulateDeath();
+          }
+      }
+      
+      //call back when LastHitInfo changed and not died
+      void SimulateHit()
+          
+      //call back when LastHitInfo changed and died
+      void SimulateDeath(){
+          //ragdoll
+          GetCharacterMovement->disable/distroy
+         	GetMesh()->SetCollision(NoCollision)
+          GetMesh()->SimulatePhysic(true)
+          //death & respawn
+      	Setlifespan(5.0f) // can be determined
+         	PC->ReadyToRespawn(5.0f + 10.0f) // set timer and call ServerRestartPlayer() 
+         	DetachFromController()
+      }
+      ```
+
+    issues about above code:
+
+    * collision is not disable when ragdoll
+    * ragdoll is not replicated
+
+  * physic hit reaction
+
+  * time line based turn in place 
+
+  * improve animation bp
+
+* For spawning/destroying, you can read the [document](https://docs.unrealengine.com/en-US/Gameplay/HowTo/SpawnAndDestroyActors/index.html)
+
+* notice: constructor -> editdefaultsonly -> beginplay
+
+  * todo: figure out the order in detail
 

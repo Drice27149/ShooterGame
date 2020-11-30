@@ -24,9 +24,12 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
-    
-    // Set up Default Weapon
+}
+
+void AShooterCharacter::BeginPlay()
+{
     CurrentWeapon = NULL;
+    Health = MaxHealth;
 }
 
 bool AShooterCharacter::IsRunning()
@@ -117,11 +120,13 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
+    DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly)
+    
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
     DOREPLIFETIME(AShooterCharacter, bRunning);
     DOREPLIFETIME(AShooterCharacter, TurnDirection);
     DOREPLIFETIME(AShooterCharacter, LastHitInfo);
-    DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly)
+    DOREPLIFETIME(AShooterCharacter, Health);
 }
 
 void AShooterCharacter::OnCrouchStart()
@@ -321,57 +326,95 @@ void AShooterCharacter::ServerDropCurrentWeapon_Implementation()
 
 void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FString HitBoneName)
 {
-    if(HitType==EHitType::NormalHit)
-    {
-        //debug only
-        FireSound(HitBoneName);
-        //0: back, 1: front, 2: left, 3: right
-        int8 HitDirection = 0;
-        FVector ForwardVector = GetActorForwardVector();
-        FVector2D HitVector2D = FVector2D(HitVector.X, HitVector.Y);
-        FVector2D ForwardVector2D = FVector2D(ForwardVector.X, ForwardVector.Y); 
-        float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
-        //if positve, hit is from back
-        if(FVector2D::DotProduct(HitVector2D, ForwardVector2D) > 0)
+    FTakeHitInfo NewHitInfo = LastHitInfo;
+    NewHitInfo.HitType = HitType;
+    NewHitInfo.HitCounter++;
+ 
+    Health -= HitDamage;
+    
+    if(Health > 0){
+        if(HitType==EHitType::NormalHit) // will be changed to physic-based animation soon
         {
-            HitDirection = 0;
-        }
-        //otherwise from front
-        else
-        {
-            bool IsLeft = HitBoneName.EndsWith(FString(TEXT("l")), ESearchCase::CaseSensitive);
-            bool IsRight = HitBoneName.EndsWith(FString(TEXT("r")), ESearchCase::CaseSensitive);
-            if(IsLeft^IsRight)
+            //debug only
+            FireSound(HitBoneName);
+            //0: back, 1: front, 2: left, 3: right
+            int8 HitDirection = 0;
+            FVector ForwardVector = GetActorForwardVector();
+            FVector2D HitVector2D = FVector2D(HitVector.X, HitVector.Y);
+            FVector2D ForwardVector2D = FVector2D(ForwardVector.X, ForwardVector.Y); 
+            float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
+            //if positve, hit is from back
+            if(FVector2D::DotProduct(HitVector2D, ForwardVector2D) > 0)
             {
-                HitDirection = IsLeft?2:3;
+                HitDirection = 0;
             }
+            //otherwise from front
             else
             {
-                HitDirection = 1;
+                bool IsLeft = HitBoneName.EndsWith(FString(TEXT("l")), ESearchCase::CaseSensitive);
+                bool IsRight = HitBoneName.EndsWith(FString(TEXT("r")), ESearchCase::CaseSensitive);
+                if(IsLeft^IsRight)
+                {
+                    HitDirection = IsLeft?2:3;
+                }
+                else
+                {
+                    HitDirection = 1;
+                }
+            }
+            //ensure replication of all members arrive at the same time
+            NewHitInfo.HitDirection = HitDirection;
+        }
+        else
+        {
+            UCharacterMovementComponent* MyCharacterMovement = Cast<UCharacterMovementComponent>(GetCharacterMovement());
+            if(MyCharacterMovement)
+            {
+                MyCharacterMovement->AddImpulse(HitImpulse, false);
             }
         }
-        //ensure replication of all members arrive at the same time
-        FTakeHitInfo NewHitInfo = LastHitInfo;
-        NewHitInfo.HitDirection = HitDirection;
-        NewHitInfo.HitCounter = NewHitInfo.HitCounter+1;
-        LastHitInfo = NewHitInfo;
     }
-    else
-    {
-        UCharacterMovementComponent* MyCharacterMovement = Cast<UCharacterMovementComponent>(GetCharacterMovement());
-        if(MyCharacterMovement)
-        {
-            MyCharacterMovement->AddImpulse(HitImpulse, false);
-        }
+    else{
+        NewHitInfo.bDeath = true;
+        OnDeath();
     }
+    
+    LastHitInfo = NewHitInfo;
 }
 
 void AShooterCharacter::OnRep_LastHitInfo()
 {
-    SimulateHit();
+    if(!LastHitInfo.bDeath){
+        if(LastHitInfo.HitType == EHitType::NormalHit){
+            SimulateHit();
+        }
+    }
+    else{
+        SimulateDeath();
+    }
 }
 
 void AShooterCharacter::SimulateHit()
 {
     PlayCharacterMontage(TakeHitMontage[LastHitInfo.HitDirection]);
+}
+
+void AShooterCharacter::SimulateDeath()
+{
+    //enable physic to simulate ragdoll
+    GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->SetComponentTickEnabled(false);
+    GetMesh()->SetSimulatePhysics(true);
+}
+
+void AShooterCharacter::OnDeath()
+{
+    float TimeGap = 3.0f;
+    AShooterPlayerController* MyPC = Cast<AShooterPlayerController>(GetController());
+    if(MyPC){
+        MyPC->BeginDelayedRespawn(TimeGap + RespawnTime);
+    }
+    DetachFromControllerPendingDestroy();
+    SetLifeSpan(TimeGap);
 }

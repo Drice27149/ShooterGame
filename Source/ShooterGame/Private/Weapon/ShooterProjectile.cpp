@@ -30,7 +30,6 @@ AShooterProjectile::AShooterProjectile()
 	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
 
 	DamageType = UDamageType::StaticClass();
-	Damage = 10.0f;
 
 	//Registering the Projectile Impact function on a Hit event.
 	if (GetLocalRole() == ROLE_Authority)
@@ -70,7 +69,7 @@ void AShooterProjectile::OnProjectileImpact(UPrimitiveComponent* HitComponent, A
             AShooterCharacter* OtherCharacter = Cast<AShooterCharacter>(OtherActor);
             if(OtherCharacter)
             {
-                OtherCharacter->PlayHit(this, EHitType::NormalHit, 0, GetActorForwardVector(), FVector(0,0,0), (Hit.BoneName).ToString());
+                OtherCharacter->PlayHit(this, EHitType::NormalHit, ProjectileDamage, GetActorForwardVector(), FVector(0,0,0), (Hit.BoneName).ToString());
             }
         }
 

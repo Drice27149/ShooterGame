@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Player/ShooterPlayerController.h"
+#include "ShooterGame.h"
 #include "UI/ShooterHUD.h"
-#include "Containers/UnrealString.h"
 
 void AShooterPlayerController::ClientScoreChange_Implementation()
 {
@@ -50,5 +50,15 @@ void AShooterPlayerController::ClientMatchEnd_Implementation()
         FString EndMessage = FString::Printf(TEXT("Game End"));
         MyShooterHUD->NotifyMatchMessage(EndMessage);
     }
+}
+
+void AShooterPlayerController::BeginDelayedRespawn(float DelayedTime)
+{
+    GetWorldTimerManager().SetTimer(RespawnTimer, this, &AShooterPlayerController::RespawnPlayerPawn, DelayedTime, false);
+}
+
+void AShooterPlayerController::RespawnPlayerPawn()
+{
+    ServerRestartPlayer();
 }
 

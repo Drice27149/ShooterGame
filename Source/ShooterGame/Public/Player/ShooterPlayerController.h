@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "UI/ShooterHUD.h"
 #include "ShooterPlayerController.generated.h"
 
 /**
@@ -30,4 +29,11 @@ public:
 
     UFUNCTION(Reliable, Client)
     void ClientRecieveMessage(const FString& Message);
+    
+    void RespawnPlayerPawn();
+    
+    void BeginDelayedRespawn(float DelayedTime);
+    
+private:
+    struct FTimerHandle RespawnTimer;
 };
