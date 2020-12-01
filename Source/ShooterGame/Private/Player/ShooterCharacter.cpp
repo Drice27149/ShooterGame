@@ -28,6 +28,8 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 
 void AShooterCharacter::BeginPlay()
 {
+    Super::BeginPlay();
+    
     CurrentWeapon = NULL;
     Health = MaxHealth;
 }
