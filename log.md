@@ -67,3 +67,110 @@ todo:
     * for character, input the impulse done
     * for give me the blueprint event and done
 
+#### 2020.11.29~
+* todo: 
+  * health & death & respawn system
+    * use ragdoll to implement death
+    * physic animation(?) on projectile hit, seems like a good idea, will look into physic asset for more detail
+  * will finish health & respawn first
+  * then consider hit reaction & ragdoll
+#### 2020.11.30~
+* todo(priority from high to low): 
+  * health &  death & ragdoll
+    * health & ragdoll & death & respawn
+      ```c++
+      //Shooter
+      
+      UPROPERTY(Replicated)
+      float Health
+      
+      void PlayHit(xxx, xxx){
+          Health -= HitDamage;
+      }
+      
+      void OnRep_lastHit(){
+          if(Health>0){
+           	SimulateHit();   
+          }
+          else{
+           	SimulateDeath();
+          }
+      }
+      
+      //call back when LastHitInfo changed and not died
+      void SimulateHit()
+          
+      //call back when LastHitInfo changed and died
+      void SimulateDeath(){
+          //ragdoll
+          GetCharacterMovement->disable/distroy
+         	GetMesh()->SetCollision(NoCollision)
+          GetMesh()->SimulatePhysic(true)
+          //death & respawn
+      	Setlifespan(5.0f) // can be determined
+         	PC->ReadyToRespawn(5.0f + 10.0f) // set timer and call ServerRestartPlayer() 
+         	DetachFromController()
+      }
+      ```
+
+    issues about above code:
+
+    * collision is not disable when ragdoll
+    * ragdoll is not replicated
+
+  * physic hit reaction
+
+  * time line based turn in place 
+
+  * improve animation bp
+
+* For spawning/destroying, you can read the [document](https://docs.unrealengine.com/en-US/Gameplay/HowTo/SpawnAndDestroyActors/index.html)
+
+* notice: constructor -> editdefaultsonly -> beginplay
+
+  * todo: figure out the order in detail
+
+#### 2020.12.1~
+
+* todo:(priority from high to low)
+
+  * physic hit reaction
+* timeline based turn in place
+  
+  * armless: fireball
+  
+  * gun: fireball + starter pack
+  
+  * sword: grey
+    * boss choice: feng mao 
+    * sword is abandoned for a while, currently focus on make tps good
+  * fix bug about ragdoll collsion
+* improve animation asset, use paragon
+  * implement sword damage system
+* improve level design
+  * HUD, UI display (health, player name, kill notify...)
+* package it with dedicated server
+  
+* This week's goal
+
+  * main menu
+  * animation that look good(turn in place, gun + armless)
+  * HUD that look good(other's health & name display on top)
+  * level that look good(basic room/landscape)
+  * step by step
+
+#### 2020.12.2
+
+* physic hit reaction
+  * timeline & curve in c++ is needed
+  * fix bug about turn in place and ragdoll
+* todo:(priority from high to low)
+  * physic hit reaction
+  * rebuild animation blueprint(change animation asset, fix foot IK)
+  * head up display, health bar, player name display in game
+  * main menu(necessary), multiple level(optional)
+* today's goal
+  * physic hit reaction(forgive me to use blueprint)
+    * bug: at the beginning, rotation yaw != actor yaw 
+    * workaround: if busy, then unable player input
+  * rebuild animation blueprint

@@ -122,13 +122,16 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
-    DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly)
-    
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
     DOREPLIFETIME(AShooterCharacter, bRunning);
     DOREPLIFETIME(AShooterCharacter, TurnDirection);
     DOREPLIFETIME(AShooterCharacter, LastHitInfo);
     DOREPLIFETIME(AShooterCharacter, Health);
+    DOREPLIFETIME(AShooterCharacter, RotationYaw);
+    
+    DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(AShooterCharacter, bBusy, COND_OwnerOnly);
+    
 }
 
 void AShooterCharacter::OnCrouchStart()
@@ -176,7 +179,28 @@ void AShooterCharacter::OnTurn(float Value)
     {
         AddControllerYawInput(Value);
     }
-    ServerSetTurnDirection(Value);
+    if(!bBusy && GetVelocity().Size() < 0.01)
+    {
+        float ControlYaw = GetControlRotation().Yaw>=0?GetControlRotation().Yaw:GetControlRotation().Yaw+360.0f;
+        float ActorYaw = GetActorRotation().Yaw>=0?GetActorRotation().Yaw:GetActorRotation().Yaw+360.0f;
+        float LeftDelta = 0.0f, RightDelta = 0.0f;
+        if(ActorYaw > ControlYaw)
+        {
+            LeftDelta = ActorYaw-ControlYaw;
+            RightDelta = 360.0f - ActorYaw + ControlYaw;
+        }
+        else
+        {
+            LeftDelta = 360.0f - ControlYaw + ActorYaw;
+            RightDelta = ControlYaw - ActorYaw;
+        }
+        float MinDelta = LeftDelta>RightDelta?RightDelta:LeftDelta;
+        if(MinDelta > MinTurnDelta)
+        {
+            int TurnType = LeftDelta<RightDelta?0:1;
+            ServerTurnInPlace(TurnType);
+        }
+    }
 }
     
 void AShooterCharacter::OnLookUp(float Value)
@@ -328,6 +352,7 @@ void AShooterCharacter::ServerDropCurrentWeapon_Implementation()
 
 void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FString HitBoneName)
 {
+    FireTest(1);
     FTakeHitInfo NewHitInfo = LastHitInfo;
     NewHitInfo.HitType = HitType;
     NewHitInfo.HitCounter++;
@@ -407,6 +432,7 @@ void AShooterCharacter::SimulateDeath()
     GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->SetComponentTickEnabled(false);
+    GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
     GetMesh()->SetSimulatePhysics(true);
 }
 
@@ -419,4 +445,53 @@ void AShooterCharacter::OnDeath()
     }
     DetachFromControllerPendingDestroy();
     SetLifeSpan(TimeGap);
+    
+    //call simulation on server
+    SimulateDeath();
+}
+
+void AShooterCharacter::OnRep_RotationYaw()
+{
+    FRotator MyRotation = GetActorRotation();
+    MyRotation.Yaw = RotationYaw;
+    SetActorRotation(MyRotation);
+}
+
+void AShooterCharacter::TurnInPlace()
+{
+    RotationYaw = GetActorRotation().Yaw + DeltaYaw;
+    OnRep_RotationYaw();
+    
+    TurnCounter--;
+    if(TurnCounter){
+        GetWorldTimerManager().SetTimer(TurnTimer, this, &AShooterCharacter::TurnInPlace, DeltaTime, false);
+    }
+    else{
+        bBusy = false;
+    }
+}
+
+void AShooterCharacter::MulticastPlayMontage_Implementation(UAnimMontage* AnimMontage, bool bSkipOwner)
+{
+    if(GetLocalRole() < ROLE_Authority && (!IsLocallyControlled() || !bSkipOwner))
+    {
+        PlayCharacterMontage(AnimMontage);
+    }
+}
+
+void AShooterCharacter::ServerTurnInPlace_Implementation(int TurnType)
+{
+    bBusy = true;
+    DeltaTime = 0.02;
+    float DeltaYaws[2] = {-1.8, 1.8};
+    DeltaYaw = DeltaYaws[TurnType];
+    TurnCounter = 50;
+    GetWorldTimerManager().SetTimer(TurnTimer, this, &AShooterCharacter::TurnInPlace, DeltaTime, false);
+    
+    MulticastPlayMontage(TurnInPlaceMontage[TurnType]);
+}
+
+void AShooterCharacter::TestPhysicHit(FVector HitImpulse, FName HitBoneName)
+{
+    SimulatePhysicHit(HitImpulse, HitBoneName);
 }

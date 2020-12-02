@@ -16,6 +16,9 @@ struct FTakeHitInfo
 	GENERATED_USTRUCT_BODY()
 
     UPROPERTY()
+    FVector HitImpulse;
+
+    UPROPERTY()
     EHitType HitType;
 
     UPROPERTY()
@@ -122,11 +125,25 @@ protected:
     void OnDrop();
     
 private:
-    UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
-    AWeapon* CurrentWeapon;
+    struct FTimerHandle TurnTimer;
+
+    int TurnCounter;
 
     UPROPERTY(Replicated)
-    float Health;
+    bool bBusy = false;
+
+    UPROPERTY(ReplicatedUsing = OnRep_RotationYaw)
+    float RotationYaw;
+    
+    float DeltaYaw;
+    
+    float DeltaTime;
+
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
+    AWeapon* CurrentWeapon;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_PickUpWeapon)
+    AWeapon* PickUpWeapon;
     
     UPROPERTY(EditDefaultsOnly)
     float MaxHealth;
@@ -145,7 +162,13 @@ private:
     UFUNCTION(Reliable, NetMulticast)
     void MulticastSetViewMode(bool Value);
     
+    UFUNCTION(Reliable, NetMulticast)
+    void MulticastPlayMontage(UAnimMontage* AnimMontage, bool bSkipOwner = false);
+    
     /**Server**/
+    UFUNCTION(Reliable, Server)
+    void ServerTurnInPlace(int TurnType);
+    
     UFUNCTION(Reliable, Server)
     void ServerSetCurrentWeapon(AWeapon* NewWeapon);
     
@@ -170,18 +193,35 @@ private:
     UFUNCTION()
     void OnRep_LastHitInfo();
     
+    UFUNCTION()
+    void OnRep_RotationYaw();
+    
     void OnDeath();
     
     void SimulateHit();
     
     void SimulateDeath();
     
+    void TurnInPlace();
+    
 protected:
-    UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_PickUpWeapon)
-    AWeapon* PickUpWeapon;
+    UPROPERTY(EditDefaultsOnly)
+    float MinTurnDelta;
 
+    UPROPERTY(EditDefaultsOnly)
+    float Turn90Delta;
+    
+    UPROPERTY(EditDefaultsOnly)
+    float Turn180Delta;
+    
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    float Health;
+    
     UPROPERTY(EditDefaultsOnly, Category = "Montage")
     UAnimMontage* TakeHitMontage[5];
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Montage")
+    UAnimMontage* TurnInPlaceMontage[4];
 
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float RunSpeedMultiplier;
@@ -197,6 +237,15 @@ protected:
 
     UFUNCTION(BlueprintImplementableEvent)
     void FireSound(const FString& BoneName);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void FireFloat(float signal);
+    
+    UFUNCTION(BlueprintCallable)
+    void TestPhysicHit(FVector HitImpulse, FName HitBoneName);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void SimulatePhysicHit(FVector HitImpulse, FName HitBoneName);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };
