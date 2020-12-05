@@ -174,3 +174,26 @@ todo:
     * bug: at the beginning, rotation yaw != actor yaw 
     * workaround: if busy, then unable player input
   * rebuild animation blueprint
+    * have problems in retarget
+    * work around: retarget in project0, then migrate
+
+#### 2020.12.3
+
+* todo:
+  * rebuild animation bp
+    * sprint is error, travel(fly) can be considered as power up
+  * try physic hit reaction result
+
+#### 2020.12.5
+
+* Health bar, name bar
+  * both are not needed
+* camera, targeting
+  * needed and important
+* hud, target center
+* weapon:
+  * a gun
+  * two strong fire
+  * a melee (sword)
+* main menu & room
+* fly & physic on impact (optional) 

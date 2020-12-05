@@ -75,6 +75,7 @@ DerivedDataCache/*
 
 # ignore paragon asset directory
 Content/Paragon/
+Content/ParagonGideon/
 
 # ignore infblade asset directory
 Content/InfinityBladeWeapons/

@@ -69,7 +69,7 @@ void AShooterProjectile::OnProjectileImpact(UPrimitiveComponent* HitComponent, A
             AShooterCharacter* OtherCharacter = Cast<AShooterCharacter>(OtherActor);
             if(OtherCharacter)
             {
-                OtherCharacter->PlayHit(this, EHitType::NormalHit, ProjectileDamage, GetActorForwardVector(), FVector(0,0,0), (Hit.BoneName).ToString());
+                OtherCharacter->PlayHit(this, EHitType::NormalHit, ProjectileDamage, GetActorForwardVector(), GetActorForwardVector()*ImpulseScale, Hit.BoneName);
             }
         }
 

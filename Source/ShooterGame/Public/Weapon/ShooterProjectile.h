@@ -34,6 +34,9 @@ public:
 	//The damage dealt by this projectile.
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
 	float ProjectileDamage;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "ImpulseScale")
+    float ImpulseScale;
 
 	class AShooterCharacter* OwnerCharacter;
 

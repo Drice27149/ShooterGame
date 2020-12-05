@@ -17,15 +17,18 @@ struct FTakeHitInfo
 
     UPROPERTY()
     FVector HitImpulse;
+    
+    UPROPERTY()
+    FVector HitVector;
 
     UPROPERTY()
     EHitType HitType;
 
     UPROPERTY()
-    int8 HitDirection;
+    int8 HitCounter;
     
     UPROPERTY()
-    int8 HitCounter;
+    FName HitBoneName;
     
     UPROPERTY()
     bool bDeath;
@@ -33,7 +36,6 @@ struct FTakeHitInfo
 	FTakeHitInfo()
     {
         HitType = EHitType::NormalHit;
-        HitDirection = 0;
         HitCounter = 0;
         bDeath = false;
     }
@@ -50,12 +52,6 @@ public:
     bool IsRunning();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
-    bool IsViewMode();
-    
-    UFUNCTION(BlueprintCallable, Category = "StateMachine")
-    float GetTurnDirection();
-    
-    UFUNCTION(BlueprintCallable, Category = "StateMachine")
     FRotator GetAimOffset();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
@@ -70,7 +66,7 @@ public:
     /** server **/
     void SetPickUpWeapon(AWeapon* NewPickUpWeapon);
     
-    void PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FString HitBoneName);
+    void PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName);
 
 protected:
 
@@ -107,12 +103,6 @@ protected:
     void OnStartFire();
     
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnViewModeStart();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
-    void OnViewModeEnd();
-    
-    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnStartReload();
     
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
@@ -125,19 +115,8 @@ protected:
     void OnDrop();
     
 private:
-    struct FTimerHandle TurnTimer;
-
-    int TurnCounter;
-
     UPROPERTY(Replicated)
     bool bBusy = false;
-
-    UPROPERTY(ReplicatedUsing = OnRep_RotationYaw)
-    float RotationYaw;
-    
-    float DeltaYaw;
-    
-    float DeltaTime;
 
     UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
     AWeapon* CurrentWeapon;
@@ -150,24 +129,12 @@ private:
 
     UPROPERTY(Replicated)
     bool bRunning = false;
-    
-    /** -1: Turning left, 0: Not turning, 1: Turning Right **/
-    UPROPERTY(Replicated)
-    float TurnDirection = 0.0f;
 
     UPROPERTY(ReplicatedUsing = OnRep_LastHitInfo)
     FTakeHitInfo LastHitInfo;
-
-    /**Multicast**/
-    UFUNCTION(Reliable, NetMulticast)
-    void MulticastSetViewMode(bool Value);
     
     UFUNCTION(Reliable, NetMulticast)
     void MulticastPlayMontage(UAnimMontage* AnimMontage, bool bSkipOwner = false);
-    
-    /**Server**/
-    UFUNCTION(Reliable, Server)
-    void ServerTurnInPlace(int TurnType);
     
     UFUNCTION(Reliable, Server)
     void ServerSetCurrentWeapon(AWeapon* NewWeapon);
@@ -178,12 +145,6 @@ private:
     UFUNCTION(Reliable, Server)
     void ServerSetRunning(bool Value);
     
-    UFUNCTION(Reliable, Server)
-    void ServerSetViewMode(bool Value);
-    
-    UFUNCTION(Reliable, Server)
-    void ServerSetTurnDirection(float Value);
-    
     UFUNCTION()
     void OnRep_PickUpWeapon();
     
@@ -193,35 +154,20 @@ private:
     UFUNCTION()
     void OnRep_LastHitInfo();
     
-    UFUNCTION()
-    void OnRep_RotationYaw();
-    
     void OnDeath();
     
     void SimulateHit();
     
     void SimulateDeath();
-    
-    void TurnInPlace();
-    
 protected:
-    UPROPERTY(EditDefaultsOnly)
-    float MinTurnDelta;
-
-    UPROPERTY(EditDefaultsOnly)
-    float Turn90Delta;
-    
-    UPROPERTY(EditDefaultsOnly)
-    float Turn180Delta;
-    
     UPROPERTY(Replicated, BlueprintReadOnly)
     float Health;
     
     UPROPERTY(EditDefaultsOnly, Category = "Montage")
-    UAnimMontage* TakeHitMontage[5];
+    UAnimMontage* FrontHitMontage;
     
     UPROPERTY(EditDefaultsOnly, Category = "Montage")
-    UAnimMontage* TurnInPlaceMontage[4];
+    UAnimMontage* BackHitMontage;
 
     UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
     float RunSpeedMultiplier;
@@ -240,12 +186,6 @@ protected:
     
     UFUNCTION(BlueprintImplementableEvent)
     void FireFloat(float signal);
-    
-    UFUNCTION(BlueprintCallable)
-    void TestPhysicHit(FVector HitImpulse, FName HitBoneName);
-    
-    UFUNCTION(BlueprintImplementableEvent)
-    void SimulatePhysicHit(FVector HitImpulse, FName HitBoneName);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };

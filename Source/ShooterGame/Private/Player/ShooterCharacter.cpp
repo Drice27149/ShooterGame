@@ -39,16 +39,6 @@ bool AShooterCharacter::IsRunning()
     return bRunning;
 }
 
-float AShooterCharacter::GetTurnDirection()
-{
-    return TurnDirection;
-}
-    
-bool AShooterCharacter::IsViewMode()
-{
-    return !bUseControllerRotationYaw;
-}
-
 FRotator AShooterCharacter::GetAimOffset()
 {
     const FVector AimDirWS = GetBaseAimRotation().Vector();
@@ -85,7 +75,6 @@ void AShooterCharacter::OnMoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
-		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -99,7 +88,6 @@ void AShooterCharacter::OnMoveRight(float Value)
 {
 	if ( (Controller != NULL) && (Value != 0.0f) )
 	{
-		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 	
@@ -124,10 +112,8 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
     
     DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
     DOREPLIFETIME(AShooterCharacter, bRunning);
-    DOREPLIFETIME(AShooterCharacter, TurnDirection);
     DOREPLIFETIME(AShooterCharacter, LastHitInfo);
     DOREPLIFETIME(AShooterCharacter, Health);
-    DOREPLIFETIME(AShooterCharacter, RotationYaw);
     
     DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(AShooterCharacter, bBusy, COND_OwnerOnly);
@@ -161,45 +147,11 @@ void AShooterCharacter::OnRunEnd()
     ServerSetRunning(false);
 }
     
-void AShooterCharacter::OnViewModeStart()
-{
-    bUseControllerRotationYaw = false;
-    ServerSetViewMode(true);
-}
-
-void AShooterCharacter::OnViewModeEnd()
-{
-    bUseControllerRotationYaw = true;
-    ServerSetViewMode(false);
-}
-
 void AShooterCharacter::OnTurn(float Value)
 {
     if ( (Controller != NULL) && (Value != 0.0f) )
     {
         AddControllerYawInput(Value);
-    }
-    if(!bBusy && GetVelocity().Size() < 0.01)
-    {
-        float ControlYaw = GetControlRotation().Yaw>=0?GetControlRotation().Yaw:GetControlRotation().Yaw+360.0f;
-        float ActorYaw = GetActorRotation().Yaw>=0?GetActorRotation().Yaw:GetActorRotation().Yaw+360.0f;
-        float LeftDelta = 0.0f, RightDelta = 0.0f;
-        if(ActorYaw > ControlYaw)
-        {
-            LeftDelta = ActorYaw-ControlYaw;
-            RightDelta = 360.0f - ActorYaw + ControlYaw;
-        }
-        else
-        {
-            LeftDelta = 360.0f - ControlYaw + ActorYaw;
-            RightDelta = ControlYaw - ActorYaw;
-        }
-        float MinDelta = LeftDelta>RightDelta?RightDelta:LeftDelta;
-        if(MinDelta > MinTurnDelta)
-        {
-            int TurnType = LeftDelta<RightDelta?0:1;
-            ServerTurnInPlace(TurnType);
-        }
     }
 }
     
@@ -219,22 +171,6 @@ void AShooterCharacter::OnDrop()
 void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
 {
     bRunning = Value;
-}
-    
-void AShooterCharacter::ServerSetViewMode_Implementation(bool Value)
-{
-    bUseControllerRotationYaw = !Value;
-    MulticastSetViewMode(Value);
-}
-
-void AShooterCharacter::ServerSetTurnDirection_Implementation(float Value)
-{
-    TurnDirection = Value;
-}
-
-void AShooterCharacter::MulticastSetViewMode_Implementation(bool Value)
-{
-    bUseControllerRotationYaw = !Value;
 }
 
 float AShooterCharacter::PlayCharacterMontage(UAnimMontage* AnimMontage, float InPlayRate)
@@ -350,47 +286,20 @@ void AShooterCharacter::ServerDropCurrentWeapon_Implementation()
     }
 }
 
-void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FString HitBoneName)
+void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName)
 {
-    FireTest(1);
     FTakeHitInfo NewHitInfo = LastHitInfo;
     NewHitInfo.HitType = HitType;
     NewHitInfo.HitCounter++;
+    NewHitInfo.HitVector = HitVector;
+    NewHitInfo.HitImpulse = HitImpulse;
+    NewHitInfo.HitBoneName = HitBoneName;
  
     Health -= HitDamage;
     
     if(Health > 0){
         if(HitType==EHitType::NormalHit) // will be changed to physic-based animation soon
         {
-            //debug only
-            FireSound(HitBoneName);
-            //0: back, 1: front, 2: left, 3: right
-            int8 HitDirection = 0;
-            FVector ForwardVector = GetActorForwardVector();
-            FVector2D HitVector2D = FVector2D(HitVector.X, HitVector.Y);
-            FVector2D ForwardVector2D = FVector2D(ForwardVector.X, ForwardVector.Y); 
-            float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
-            //if positve, hit is from back
-            if(FVector2D::DotProduct(HitVector2D, ForwardVector2D) > 0)
-            {
-                HitDirection = 0;
-            }
-            //otherwise from front
-            else
-            {
-                bool IsLeft = HitBoneName.EndsWith(FString(TEXT("l")), ESearchCase::CaseSensitive);
-                bool IsRight = HitBoneName.EndsWith(FString(TEXT("r")), ESearchCase::CaseSensitive);
-                if(IsLeft^IsRight)
-                {
-                    HitDirection = IsLeft?2:3;
-                }
-                else
-                {
-                    HitDirection = 1;
-                }
-            }
-            //ensure replication of all members arrive at the same time
-            NewHitInfo.HitDirection = HitDirection;
         }
         else
         {
@@ -423,7 +332,18 @@ void AShooterCharacter::OnRep_LastHitInfo()
 
 void AShooterCharacter::SimulateHit()
 {
-    PlayCharacterMontage(TakeHitMontage[LastHitInfo.HitDirection]);
+    FVector2D HitVector2D = FVector2D(LastHitInfo.HitVector.X, LastHitInfo.HitVector.Y);
+    FVector2D ForwardVector2D = FVector2D(GetActorForwardVector().X, GetActorForwardVector().Y); 
+    float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
+    //debug
+    FireFloat(DotProduct);
+    if(DotProduct > 0)
+    {
+        PlayCharacterMontage(BackHitMontage);
+    }
+    else{
+        PlayCharacterMontage(FrontHitMontage);
+    }
 }
 
 void AShooterCharacter::SimulateDeath()
@@ -450,48 +370,10 @@ void AShooterCharacter::OnDeath()
     SimulateDeath();
 }
 
-void AShooterCharacter::OnRep_RotationYaw()
-{
-    FRotator MyRotation = GetActorRotation();
-    MyRotation.Yaw = RotationYaw;
-    SetActorRotation(MyRotation);
-}
-
-void AShooterCharacter::TurnInPlace()
-{
-    RotationYaw = GetActorRotation().Yaw + DeltaYaw;
-    OnRep_RotationYaw();
-    
-    TurnCounter--;
-    if(TurnCounter){
-        GetWorldTimerManager().SetTimer(TurnTimer, this, &AShooterCharacter::TurnInPlace, DeltaTime, false);
-    }
-    else{
-        bBusy = false;
-    }
-}
-
 void AShooterCharacter::MulticastPlayMontage_Implementation(UAnimMontage* AnimMontage, bool bSkipOwner)
 {
     if(GetLocalRole() < ROLE_Authority && (!IsLocallyControlled() || !bSkipOwner))
     {
         PlayCharacterMontage(AnimMontage);
     }
-}
-
-void AShooterCharacter::ServerTurnInPlace_Implementation(int TurnType)
-{
-    bBusy = true;
-    DeltaTime = 0.02;
-    float DeltaYaws[2] = {-1.8, 1.8};
-    DeltaYaw = DeltaYaws[TurnType];
-    TurnCounter = 50;
-    GetWorldTimerManager().SetTimer(TurnTimer, this, &AShooterCharacter::TurnInPlace, DeltaTime, false);
-    
-    MulticastPlayMontage(TurnInPlaceMontage[TurnType]);
-}
-
-void AShooterCharacter::TestPhysicHit(FVector HitImpulse, FName HitBoneName)
-{
-    SimulatePhysicHit(HitImpulse, HitBoneName);
 }
