@@ -20,7 +20,7 @@ public:
     
     virtual void BeginPlay() override;
     
-    void StartFire();
+    virtual void StartFire();
     
     void OnEquip();
     
