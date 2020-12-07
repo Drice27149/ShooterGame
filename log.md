@@ -197,3 +197,23 @@ todo:
   * a melee (sword)
 * main menu & room
 * fly & physic on impact (optional) 
+
+#### 2020.12.7
+
+* discovering camera, seems like attach camera to weapon is ok? or do nothing
+
+* basic inventory & weapon switch
+
+  * constraint: two strong fire, one melee, one default gun, two others(projectile or portion)
+
+  * pick up, add to inventory first
+
+  * switch
+
+    * client go to simulate: 
+
+    * server: change current weapon
+    * remote client: onRep_current weapon: simulate
+    * detach/attach is done in animation notify
+
+* bug: fire-effect's location is somewhat wrong...

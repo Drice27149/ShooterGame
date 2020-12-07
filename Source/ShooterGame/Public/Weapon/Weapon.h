@@ -28,6 +28,12 @@ public:
     
     void OnDrop();
     
+    void SimulateEquip();
+    
+    void SimulateUnequip();
+    
+    void SimulateDrop();
+    
     void SetOwnerCharacter(AShooterCharacter* NewOwnerCharacter);
     
     bool HasOwner();
@@ -41,6 +47,12 @@ public:
     
     virtual void HandleFiring(bool bfromReplication);
     
+    UPROPERTY(EditDefaultsOnly, Category = "AttachSocket")
+    FName UsedSocket;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AttachSocket")
+    FName UnUsedSocket;
+    
 protected:
     /** replicate for calling cosmetic function on owner character **/
     UPROPERTY(Replicated)
@@ -51,12 +63,6 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, Category = "Mesh")
     class USkeletalMeshComponent* Mesh;
-
-    UPROPERTY(EditDefaultsOnly, Category = "AttachSocket")
-    FName UsedSocket;
-
-    UPROPERTY(EditDefaultsOnly, Category = "AttachSocket")
-    FName UnUsedSocket;
     
     UPROPERTY(EditDefaultsOnly, Category = "WeaponName")
     FString WeaponName;

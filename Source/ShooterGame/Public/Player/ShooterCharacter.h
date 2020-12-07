@@ -69,6 +69,8 @@ public:
     void PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName);
 
 protected:
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentWeapon)
+    AWeapon* CurrentWeapon;
 
     /** handle player input **/
 
@@ -114,13 +116,22 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "PlayerInput")
     void OnDrop();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnSwitchWeapon(int direction);
+    
+    UFUNCTION(BlueprintCallable, Category = "Animation Notify")
+    void EquipWeaponMesh();
+    
+    UFUNCTION(BlueprintCallable, Category = "Animation Notify")
+    void UnequipWeaponMesh();
+    
+    UFUNCTION(BlueprintCallable, Category = "Animation Notify")
+    void DropWeaponMesh();
+    
 private:
     UPROPERTY(Replicated)
     bool bBusy = false;
 
-    UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
-    AWeapon* CurrentWeapon;
-    
     UPROPERTY(ReplicatedUsing = OnRep_PickUpWeapon)
     AWeapon* PickUpWeapon;
     
@@ -137,10 +148,10 @@ private:
     void MulticastPlayMontage(UAnimMontage* AnimMontage, bool bSkipOwner = false);
     
     UFUNCTION(Reliable, Server)
-    void ServerSetCurrentWeapon(AWeapon* NewWeapon);
+    void ServerSetCurrentWeapon(AWeapon* NewWeapon, bool bDropLastWeapon = false);
     
     UFUNCTION(Reliable, Server)
-    void ServerDropCurrentWeapon();
+    void ServerPickUpWeapon();
     
     UFUNCTION(Reliable, Server)
     void ServerSetRunning(bool Value);
@@ -159,7 +170,19 @@ private:
     void SimulateHit();
     
     void SimulateDeath();
+    
+    void SwitchToNewWeapon(AWeapon* NewWeapon);
+    
 protected:
+    UPROPERTY(Replicated)
+    TArray<AWeapon*> Inventory;
+    
+    UPROPERTY(Replicated)
+    int CurrentWeaponIndex;
+
+    UPROPERTY()
+    AWeapon* LastEquipWeapon;
+
     UPROPERTY(Replicated, BlueprintReadOnly)
     float Health;
     

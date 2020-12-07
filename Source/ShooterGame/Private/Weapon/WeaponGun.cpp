@@ -45,6 +45,9 @@ void AWeaponGun::StartFire()
     
     if(GetWorld()->LineTraceSingleByChannel(Hit, StartTrace, EndTrace, ECC_WorldDynamic, CollisionParams)){
         ServerNotifyHit(Hit);
+        //debug
+        FireVector(Hit.Location);
+        
         SimulateWeaponHit(Hit.Location);
     }
     
@@ -78,20 +81,31 @@ void AWeaponGun::ServerNotifyHit_Implementation(FHitResult HitResult)
         FirePointComp->GetForwardVector(), FirePointComp->GetForwardVector(), HitResult.BoneName);
     }
     
+    // debug 
+    FireVector(HitResult.Location);
+    
     // update HitNotify for remote client to simulate
     FHitNotify NewNotify;
     NewNotify.HitLocation = HitResult.Location;
-    NewNotify.HitCounter = HitResult.HitCounter + 1;
+    NewNotify.HitCounter = HitNotify.HitCounter + 1;
     HitNotify = NewNotify;
+    
+    // debug
+    FireVector(HitNotify.HitLocation);
 }
 
 void AWeaponGun::OnRep_HitNotify()
 {
+    // debug
+    FireVector(HitNotify.HitLocation);
     SimulateWeaponHit(HitNotify.HitLocation);
 }
 
 void AWeaponGun::SimulateWeaponHit(FVector HitLocation)
 {
+    // debug
+    FireVector(HitLocation);
+    
     if(HitEffect != NULL)
     {
         UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, HitLocation, FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
@@ -135,11 +149,11 @@ void AWeaponGun::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
     // only owner need to know bullet count
-    DOREPLIFETIME_CONDITION(AShooterCharacter, BulletCount, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(AWeaponGun, BulletCount, COND_OwnerOnly);
     
     // skip owner because weapon fire was already simulated on owner
-    DOREPLIFETIME_CONDITION(AShooterCharacter, BurstCounter, COND_SkipOwner);
-    DOREPLIFETIME_CONDITION(AShooterCharacter, HitNotify, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(AWeaponGun, BurstCounter, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(AWeaponGun, HitNotify, COND_SkipOwner);
 }
 
 void AWeaponGun::StartReload()

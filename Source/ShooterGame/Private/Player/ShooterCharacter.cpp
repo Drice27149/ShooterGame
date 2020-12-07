@@ -110,13 +110,16 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
-    DOREPLIFETIME(AShooterCharacter, CurrentWeapon);
     DOREPLIFETIME(AShooterCharacter, bRunning);
     DOREPLIFETIME(AShooterCharacter, LastHitInfo);
     DOREPLIFETIME(AShooterCharacter, Health);
     
     DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(AShooterCharacter, bBusy, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(AShooterCharacter, Inventory, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(AShooterCharacter, CurrentWeaponIndex, COND_OwnerOnly);
+    // owner alreay known change of weapon and simulation was done beforehead
+    DOREPLIFETIME_CONDITION(AShooterCharacter, CurrentWeapon, COND_SkipOwner);
 }
 
 void AShooterCharacter::OnCrouchStart()
@@ -162,9 +165,99 @@ void AShooterCharacter::OnLookUp(float Value)
     }
 }
 
+void AShooterCharacter::OnPickUp()
+{
+    if(PickUpWeapon && !PickUpWeapon->HasOwner())
+    {
+        // add weapon to inventory
+        ServerPickUpWeapon();
+        
+        SwitchToNewWeapon(PickUpWeapon);
+    }
+}
+
+void AShooterCharacter::OnSwitchWeapon(int direction)
+{
+    if(Inventory.Num())
+    {
+        int NextWeaponIndex = (CurrentWeaponIndex + direction)%Inventory.Num();
+        if(NextWeaponIndex < 0)
+        {
+            NextWeaponIndex += Inventory.Num();
+        }
+        
+        AWeapon* NextWeapon = Inventory[NextWeaponIndex];
+        SwitchToNewWeapon(NextWeapon);
+    }
+}
+
+void AShooterCharacter::OnUnEquip()
+{
+    if(CurrentWeapon)
+    {
+        LastEquipWeapon = CurrentWeapon;
+        LastEquipWeapon->SimulateUnequip();
+        CurrentWeapon = NULL;
+        
+        ServerSetCurrentWeapon(NULL);
+    }
+}
+
 void AShooterCharacter::OnDrop()
 {
-    ServerDropCurrentWeapon();
+    if(CurrentWeapon)
+    {
+        LastEquipWeapon = CurrentWeapon;
+        LastEquipWeapon->SimulateDrop();
+        CurrentWeapon = NULL;
+        
+        ServerSetCurrentWeapon(NULL, true);
+    }
+}
+
+void AShooterCharacter::SwitchToNewWeapon(AWeapon* NewWeapon)
+{
+    // set up local because CurrentWeapon won't be replicated to local
+    if(CurrentWeapon)
+    {
+        LastEquipWeapon = CurrentWeapon;
+        LastEquipWeapon->SimulateUnequip();
+    }
+    CurrentWeapon = NewWeapon;
+    CurrentWeapon->SimulateEquip();
+    
+    // call rpc to replicate weapon on server and remote client
+    ServerSetCurrentWeapon(NewWeapon);
+}
+
+void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon, bool bDropLastWeapon)
+{
+    AWeapon* LastWeapon = CurrentWeapon;
+    
+    if(bDropLastWeapon)
+    {
+        if(LastWeapon)
+        {
+            LastWeapon->SetOwnerCharacter(NULL);
+            Inventory.RemoveAt(CurrentWeaponIndex);
+        }
+    }
+    
+    //if new weapon is picked up, need to set it's owner
+    if(!bDropLastWeapon && NewWeapon){
+        NewWeapon->SetOwnerCharacter(this);
+        NewWeapon->SetOwner(this);
+    }
+    
+    CurrentWeapon = NewWeapon;
+    
+    OnRep_CurrentWeapon(LastWeapon);
+}
+
+void AShooterCharacter::ServerPickUpWeapon_Implementation()
+{
+    Inventory.Add(PickUpWeapon);
+    CurrentWeaponIndex = Inventory.Num()-1;
 }
     
 void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
@@ -189,23 +282,6 @@ void AShooterCharacter::OnStartReload()
     {
         CurrentWeaponGun->StartReload();
     }
-}
-
-void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon)
-{
-    AWeapon* LastWeapon = CurrentWeapon;
-    CurrentWeapon = NewWeapon;
-    //if new weapon is picked up, need to set it's owner
-    if(NewWeapon){
-        NewWeapon->SetOwnerCharacter(this);
-        NewWeapon->SetOwner(this);
-    }
-    OnRep_CurrentWeapon(LastWeapon);
-}
-
-void AShooterCharacter::OnUnEquip()
-{
-    ServerSetCurrentWeapon(NULL);
 }
 
 int AShooterCharacter::GetCurrentWeaponType()
@@ -245,43 +321,27 @@ void AShooterCharacter::SetPickUpWeapon(AWeapon* NewPickUpWeapon)
     PickUpWeapon = NewPickUpWeapon;
 }
 
-void AShooterCharacter::OnPickUp()
-{
-    if(PickUpWeapon && !PickUpWeapon->HasOwner())
-    {
-        ServerSetCurrentWeapon(PickUpWeapon);
-    }
-}
-
 void AShooterCharacter::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 {
+    // save for detach in animation notify
+    LastEquipWeapon = LastWeapon;
+    
     if(LastWeapon){
         //Unequip last weapon
         if(LastWeapon->HasOwner())
         {
-            LastWeapon->OnUnEquip();
+            LastWeapon->SimulateUnequip();
         }
         //drop last weapon
         else
         {
-            LastWeapon->OnDrop();
+            LastWeapon->SimulateDrop();
         }
     }
     
     if(CurrentWeapon)
     {
-        CurrentWeapon->OnEquip();
-    }
-}
-
-void AShooterCharacter::ServerDropCurrentWeapon_Implementation()
-{
-    if(CurrentWeapon)
-    {
-        CurrentWeapon->SetOwnerCharacter(NULL);
-        AWeapon* LastWeapon = CurrentWeapon;
-        CurrentWeapon = NULL;
-        OnRep_CurrentWeapon(LastWeapon);
+        CurrentWeapon->SimulateEquip();
     }
 }
 
@@ -375,4 +435,33 @@ void AShooterCharacter::MulticastPlayMontage_Implementation(UAnimMontage* AnimMo
     {
         PlayCharacterMontage(AnimMontage);
     }
+}
+
+void AShooterCharacter::EquipWeaponMesh()
+{
+    if(CurrentWeapon)
+    {
+        CurrentWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->UsedSocket);
+    }
+}
+    
+
+void AShooterCharacter::UnequipWeaponMesh()
+{
+    if(LastEquipWeapon)
+    {
+        LastEquipWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        LastEquipWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->UnUsedSocket);
+    }
+    
+}
+
+void AShooterCharacter::DropWeaponMesh()
+{
+    if(LastEquipWeapon)
+    {
+        LastEquipWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    }
+    
 }

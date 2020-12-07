@@ -150,4 +150,25 @@ void AWeapon::OnWeaponOverlapEnd(UPrimitiveComponent* HitComp, AActor* OtherActo
     }
 }
 
+void AWeapon::SimulateEquip()
+{
+    if(OwnerCharacter)
+    {
+        OwnerCharacter->PlayCharacterMontage(EquipMontage_Character);
+    }
+}
+    
+void AWeapon::SimulateUnequip()
+{
+    if(OwnerCharacter)
+    {
+        OwnerCharacter->PlayCharacterMontage(UnEquipMontage_Character);
+    }
+}
+    
+void AWeapon::SimulateDrop()
+{
+    DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+}
+
 

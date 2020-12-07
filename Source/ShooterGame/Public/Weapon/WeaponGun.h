@@ -17,7 +17,7 @@ struct FHitNotify
     UPROPERTY();
     int HitCounter;
 
-	FTakeHitInfo()
+	FHitNotify()
     {
         HitCounter = 0;
     }
@@ -76,6 +76,9 @@ protected:
     class UAnimMontage* PawnReloadAnimation;
     
     void SimulateWeaponHit(FVector HitLocation);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void FireVector(FVector signal);
     
 private:
     UPROPERTY(ReplicatedUsing = OnRep_BurstCounter);
