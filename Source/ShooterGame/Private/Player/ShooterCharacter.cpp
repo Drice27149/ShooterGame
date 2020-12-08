@@ -24,6 +24,17 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+    
+    // Create a camera boom (pulls in towards the player if there is a collision)
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
+    CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+
+	// Create a follow camera
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+    FollowCamera->bUsePawnControlRotation = true;
 }
 
 void AShooterCharacter::BeginPlay()
@@ -116,8 +127,6 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
     
     DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(AShooterCharacter, bBusy, COND_OwnerOnly);
-    DOREPLIFETIME_CONDITION(AShooterCharacter, Inventory, COND_OwnerOnly);
-    DOREPLIFETIME_CONDITION(AShooterCharacter, CurrentWeaponIndex, COND_OwnerOnly);
     // owner alreay known change of weapon and simulation was done beforehead
     DOREPLIFETIME_CONDITION(AShooterCharacter, CurrentWeapon, COND_SkipOwner);
 }
@@ -170,7 +179,8 @@ void AShooterCharacter::OnPickUp()
     if(PickUpWeapon && !PickUpWeapon->HasOwner())
     {
         // add weapon to inventory
-        ServerPickUpWeapon();
+        Inventory.Add(PickUpWeapon);
+        CurrentWeaponIndex = Inventory.Num()-1;
         
         SwitchToNewWeapon(PickUpWeapon);
     }
@@ -180,13 +190,13 @@ void AShooterCharacter::OnSwitchWeapon(int direction)
 {
     if(Inventory.Num())
     {
-        int NextWeaponIndex = (CurrentWeaponIndex + direction)%Inventory.Num();
-        if(NextWeaponIndex < 0)
+        CurrentWeaponIndex = (CurrentWeaponIndex + direction)%Inventory.Num();
+        if(CurrentWeaponIndex < 0)
         {
-            NextWeaponIndex += Inventory.Num();
+            CurrentWeaponIndex += Inventory.Num();
         }
         
-        AWeapon* NextWeapon = Inventory[NextWeaponIndex];
+        AWeapon* NextWeapon = Inventory[CurrentWeaponIndex];
         SwitchToNewWeapon(NextWeapon);
     }
 }
@@ -210,8 +220,39 @@ void AShooterCharacter::OnDrop()
         LastEquipWeapon = CurrentWeapon;
         LastEquipWeapon->SimulateDrop();
         CurrentWeapon = NULL;
+        //delete weapon from inventory
+        Inventory.RemoveAt(CurrentWeaponIndex);
         
         ServerSetCurrentWeapon(NULL, true);
+    }
+}
+
+void AShooterCharacter::OnAim()
+{
+    if(CurrentWeapon && FollowCamera && CurrentWeapon->CameraSocket != TEXT(""))
+    {
+        // debug
+        FireTest(0);
+        FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+        FollowCamera->AttachToComponent(CurrentWeapon->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->CameraSocket);
+    }
+    else
+    {
+        FireTest(1);
+    }
+}
+    
+void AShooterCharacter::OnUnAim()
+{
+    if(FollowCamera)
+    {
+        FireTest(2);
+        FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+        FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+    }
+    else
+    {
+        FireTest(3);
     }
 }
 
@@ -239,7 +280,6 @@ void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon
         if(LastWeapon)
         {
             LastWeapon->SetOwnerCharacter(NULL);
-            Inventory.RemoveAt(CurrentWeaponIndex);
         }
     }
     
@@ -252,12 +292,6 @@ void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon
     CurrentWeapon = NewWeapon;
     
     OnRep_CurrentWeapon(LastWeapon);
-}
-
-void AShooterCharacter::ServerPickUpWeapon_Implementation()
-{
-    Inventory.Add(PickUpWeapon);
-    CurrentWeaponIndex = Inventory.Num()-1;
 }
     
 void AShooterCharacter::ServerSetRunning_Implementation(bool Value)
@@ -463,5 +497,4 @@ void AShooterCharacter::DropWeaponMesh()
     {
         LastEquipWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
     }
-    
 }

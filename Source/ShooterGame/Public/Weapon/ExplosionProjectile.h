@@ -42,6 +42,9 @@ protected:
     UPROPERTY(EditDefaultsOnly)
     float ExplosionSpeed;
     
+    UPROPERTY(EditDefaultsOnly)
+    float ExplosionDamage;
+    
     UFUNCTION(BlueprintImplementableEvent)
     void OnExplode();
     

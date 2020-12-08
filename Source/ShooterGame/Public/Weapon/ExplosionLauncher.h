@@ -16,6 +16,8 @@ public:
 	AExplosionLauncher();
     
     //override from Aweapon
+    virtual void StartFire() override;
+    
     virtual bool CanFire() override;
 
     virtual int GetWeaponTypeId() override;
@@ -32,4 +34,16 @@ protected:
     
     UPROPERTY(EditDefaultsOnly, Category = "FireImpulseScale")
     float FireImpulseScale;
+
+private:
+    UPROPERTY(ReplicatedUsing = OnRep_BurstCounter)
+    int BurstCounter;
+    
+    UFUNCTION(Reliable, Server)
+    void ServerFireLauncher(FTransform FireTransform, FVector FireVector);
+    
+    UFUNCTION()
+    void OnRep_BurstCounter();
+    
+    void SimulateLauncherFire();
 };

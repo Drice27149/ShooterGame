@@ -5,7 +5,6 @@
 #include "ShooterGame.h"
 #include "Player/ShooterCharacter.h"
 
-
 // Sets default values
 AWeapon::AWeapon()
 {
@@ -160,15 +159,23 @@ void AWeapon::SimulateEquip()
     
 void AWeapon::SimulateUnequip()
 {
+    DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, UnUsedSocket);
+    /*
     if(OwnerCharacter)
     {
         OwnerCharacter->PlayCharacterMontage(UnEquipMontage_Character);
-    }
+    }*/
 }
     
 void AWeapon::SimulateDrop()
 {
     DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+}
+
+USkeletalMeshComponent* AWeapon::GetMesh()
+{
+    return Mesh;
 }
 
 

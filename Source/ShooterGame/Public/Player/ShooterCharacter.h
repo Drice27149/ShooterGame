@@ -63,10 +63,9 @@ public:
     
     float PlayCharacterMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1.0f);
     
-    /** server **/
-    void SetPickUpWeapon(AWeapon* NewPickUpWeapon);
-    
     void PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName);
+
+    void SetPickUpWeapon(AWeapon* PickUpWeapon);
 
 protected:
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentWeapon)
@@ -128,6 +127,12 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Animation Notify")
     void DropWeaponMesh();
     
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnAim();
+    
+    UFUNCTION(BlueprintCallable, Category = "PlayerInput")
+    void OnUnAim();
+    
 private:
     UPROPERTY(Replicated)
     bool bBusy = false;
@@ -151,9 +156,6 @@ private:
     void ServerSetCurrentWeapon(AWeapon* NewWeapon, bool bDropLastWeapon = false);
     
     UFUNCTION(Reliable, Server)
-    void ServerPickUpWeapon();
-    
-    UFUNCTION(Reliable, Server)
     void ServerSetRunning(bool Value);
     
     UFUNCTION()
@@ -174,10 +176,10 @@ private:
     void SwitchToNewWeapon(AWeapon* NewWeapon);
     
 protected:
-    UPROPERTY(Replicated)
+    UPROPERTY()
     TArray<AWeapon*> Inventory;
     
-    UPROPERTY(Replicated)
+    UPROPERTY()
     int CurrentWeaponIndex;
 
     UPROPERTY()
@@ -185,6 +187,12 @@ protected:
 
     UPROPERTY(Replicated, BlueprintReadOnly)
     float Health;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Character Camera")
+	class USpringArmComponent* CameraBoom;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Camera")
+	class UCameraComponent* FollowCamera;
     
     UPROPERTY(EditDefaultsOnly, Category = "Montage")
     UAnimMontage* FrontHitMontage;

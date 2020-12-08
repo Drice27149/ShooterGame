@@ -216,4 +216,16 @@ todo:
     * remote client: onRep_current weapon: simulate
     * detach/attach is done in animation notify
 
-* bug: fire-effect's location is somewhat wrong...
+* bug: fire-effect's location is somewhat wrong...[fixed]
+
+* todo: 
+
+  * first person camera when shooting
+    * blueprint done, next step do it in c++
+* basic button(switch weapon, pick up, drop, fire)
+  * kill notify?
+  * main menu
+  * level design
+  * bug: laucher start fire need to be fixed
+  * bug: camera conflict with weapon
+* 

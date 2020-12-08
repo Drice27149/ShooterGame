@@ -40,6 +40,8 @@ public:
     
     FString GetWeaponName();
     
+    class USkeletalMeshComponent* GetMesh();
+    
     /** will be overridden by subclass **/
     virtual bool CanFire();
 
@@ -53,6 +55,9 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "AttachSocket")
     FName UnUsedSocket;
     
+    UPROPERTY(EditDefaultsOnly, Category = "Camera")
+    FName CameraSocket;
+    
 protected:
     /** replicate for calling cosmetic function on owner character **/
     UPROPERTY(Replicated)
@@ -61,7 +66,7 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "CollisionComp")
     class USphereComponent* RootComp;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Mesh")
+    UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Mesh")
     class USkeletalMeshComponent* Mesh;
     
     UPROPERTY(EditDefaultsOnly, Category = "WeaponName")
