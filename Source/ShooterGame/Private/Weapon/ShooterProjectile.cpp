@@ -64,16 +64,7 @@ void AShooterProjectile::OnProjectileImpact(UPrimitiveComponent* HitComponent, A
 {
     if(GetLocalRole() == ROLE_Authority)
     {
-        if (OtherActor)
-        {
-            AShooterCharacter* OtherCharacter = Cast<AShooterCharacter>(OtherActor);
-            if(OtherCharacter)
-            {
-                OtherCharacter->PlayHit(this, EHitType::NormalHit, ProjectileDamage, GetActorForwardVector(), GetActorForwardVector()*ImpulseScale, Hit.BoneName);
-            }
-        }
-
-        Destroy();
+        
     }
 }
 

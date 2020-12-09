@@ -7,6 +7,7 @@
 #include "UI/ShooterHUD.h"
 #include "Player/MyCharacterMovementComponent.h"
 #include "Player/ShooterPlayerController.h"
+#include "ShooterGameMode.h"
 
 AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UMyCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -231,14 +232,8 @@ void AShooterCharacter::OnAim()
 {
     if(CurrentWeapon && FollowCamera && CurrentWeapon->CameraSocket != TEXT(""))
     {
-        // debug
-        FireTest(0);
         FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
         FollowCamera->AttachToComponent(CurrentWeapon->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->CameraSocket);
-    }
-    else
-    {
-        FireTest(1);
     }
 }
     
@@ -246,13 +241,8 @@ void AShooterCharacter::OnUnAim()
 {
     if(FollowCamera)
     {
-        FireTest(2);
         FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
         FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-    }
-    else
-    {
-        FireTest(3);
     }
 }
 
@@ -266,8 +256,15 @@ void AShooterCharacter::SwitchToNewWeapon(AWeapon* NewWeapon)
     }
     CurrentWeapon = NewWeapon;
     CurrentWeapon->SimulateEquip();
+    // notify HUD weapon change
+    AShooterPlayerController* MyShooterPlayerController = Cast<AShooterPlayerController>(GetController());
+    AShooterHUD* MyShooterHUD = MyShooterPlayerController?(Cast<AShooterHUD>(MyShooterPlayerController->GetHUD())):NULL;
+    if(MyShooterHUD)
+    {
+        MyShooterHUD->OnWeaponChange(NewWeapon);
+    }
     
-    // call rpc to replicate weapon on server and remote client
+    // call rpc to replicate weapon change on server and remote client
     ServerSetCurrentWeapon(NewWeapon);
 }
 
@@ -284,7 +281,8 @@ void AShooterCharacter::ServerSetCurrentWeapon_Implementation(AWeapon* NewWeapon
     }
     
     //if new weapon is picked up, need to set it's owner
-    if(!bDropLastWeapon && NewWeapon){
+    if(!bDropLastWeapon && NewWeapon)
+    {
         NewWeapon->SetOwnerCharacter(this);
         NewWeapon->SetOwner(this);
     }
@@ -360,7 +358,8 @@ void AShooterCharacter::OnRep_CurrentWeapon(AWeapon* LastWeapon)
     // save for detach in animation notify
     LastEquipWeapon = LastWeapon;
     
-    if(LastWeapon){
+    if(LastWeapon)
+    {
         //Unequip last weapon
         if(LastWeapon->HasOwner())
         {
@@ -379,7 +378,7 @@ void AShooterCharacter::OnRep_CurrentWeapon(AWeapon* LastWeapon)
     }
 }
 
-void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName)
+void AShooterCharacter::PlayHit(AShooterCharacter* OtherCharacter, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName)
 {
     FTakeHitInfo NewHitInfo = LastHitInfo;
     NewHitInfo.HitType = HitType;
@@ -390,11 +389,9 @@ void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitD
  
     Health -= HitDamage;
     
-    if(Health > 0){
-        if(HitType==EHitType::NormalHit) // will be changed to physic-based animation soon
-        {
-        }
-        else
+    if(Health > 0)
+    {
+        if(HitType==EHitType::HeavyHit) // will be changed to physic-based animation soon
         {
             UCharacterMovementComponent* MyCharacterMovement = Cast<UCharacterMovementComponent>(GetCharacterMovement());
             if(MyCharacterMovement)
@@ -403,8 +400,21 @@ void AShooterCharacter::PlayHit(AActor* OtherActor, EHitType HitType, float HitD
             }
         }
     }
-    else{
+    else
+    {
         NewHitInfo.bDeath = true;
+        
+        AShooterPlayerController* KillerPC = OtherCharacter?Cast<AShooterPlayerController>(OtherCharacter->GetController()):NULL;
+        AShooterPlayerController* KilledPC = Cast<AShooterPlayerController>(GetController());
+        if(KillerPC && KilledPC)
+        {
+            AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+            if(MyGameMode)
+            {
+                MyGameMode->Killed(KillerPC, KilledPC);
+            }
+        }
+        
         OnDeath();
     }
     
@@ -425,11 +435,20 @@ void AShooterCharacter::OnRep_LastHitInfo()
 
 void AShooterCharacter::SimulateHit()
 {
+    if(IsLocallyControlled())
+    {
+        AShooterPlayerController* MyShooterPlayerController = Cast<AShooterPlayerController>(GetController());
+        AShooterHUD* MyShooterHUD = MyShooterPlayerController?(Cast<AShooterHUD>(MyShooterPlayerController->GetHUD())):NULL;
+        if(MyShooterHUD)
+        {
+            MyShooterHUD->OnHit(LastHitInfo);
+        }
+    }
+    
     FVector2D HitVector2D = FVector2D(LastHitInfo.HitVector.X, LastHitInfo.HitVector.Y);
     FVector2D ForwardVector2D = FVector2D(GetActorForwardVector().X, GetActorForwardVector().Y); 
     float DotProduct = FVector2D::DotProduct(HitVector2D, ForwardVector2D);
-    //debug
-    FireFloat(DotProduct);
+    
     if(DotProduct > 0)
     {
         PlayCharacterMontage(BackHitMontage);
@@ -441,7 +460,7 @@ void AShooterCharacter::SimulateHit()
 
 void AShooterCharacter::SimulateDeath()
 {
-    //enable physic to simulate ragdoll
+    // enable physic to simulate ragdoll
     GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->SetComponentTickEnabled(false);
@@ -451,15 +470,12 @@ void AShooterCharacter::SimulateDeath()
 
 void AShooterCharacter::OnDeath()
 {
+    // pending to be destroyed
     float TimeGap = 3.0f;
-    AShooterPlayerController* MyPC = Cast<AShooterPlayerController>(GetController());
-    if(MyPC){
-        MyPC->BeginDelayedRespawn(TimeGap + RespawnTime);
-    }
     DetachFromControllerPendingDestroy();
     SetLifeSpan(TimeGap);
     
-    //call simulation on server
+    // call simulation on server
     SimulateDeath();
 }
 

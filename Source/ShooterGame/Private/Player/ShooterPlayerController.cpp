@@ -2,6 +2,7 @@
 
 #include "Player/ShooterPlayerController.h"
 #include "ShooterGame.h"
+#include "Player/ShooterPlayerState.h"
 #include "UI/ShooterHUD.h"
 
 void AShooterPlayerController::ClientScoreChange_Implementation()
@@ -60,5 +61,66 @@ void AShooterPlayerController::BeginDelayedRespawn(float DelayedTime)
 void AShooterPlayerController::RespawnPlayerPawn()
 {
     ServerRestartPlayer();
+}
+
+void AShooterPlayerController::NotifyKilled(AShooterPlayerState* KillerPlayerState, AShooterPlayerState* KilledPlayerState)
+{
+    if(KilledPlayerState == PlayerState)
+    {
+        ClientNotifySelfDeath(KillerPlayerState);
+    }
+    else if(KillerPlayerState == PlayerState)
+    {
+        ClientNotifyKill(KilledPlayerState);
+    }
+    else
+    {
+        ClientNotifyOtherDeath(KillerPlayerState, KilledPlayerState);
+    }
+}
+
+void AShooterPlayerController::ClientNotifyKill_Implementation(class AShooterPlayerState* KilledPlayerState)
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        MyShooterHUD->OnKill(KilledPlayerState);
+    }
+}
+    
+void AShooterPlayerController::ClientNotifySelfDeath_Implementation(class AShooterPlayerState* KillerPlayerState)
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        MyShooterHUD->OnSelfDeath(KillerPlayerState);
+    }
+}
+    
+void AShooterPlayerController::ClientNotifyOtherDeath_Implementation(class AShooterPlayerState* KillerPlayerState, class AShooterPlayerState* KilledPlayerState)
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        MyShooterHUD->OnOtherDeath(KillerPlayerState, KilledPlayerState);
+    }
+}
+
+void AShooterPlayerController::ClientBeginDelayRespawn_Implementation(float DelayTime)
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        MyShooterHUD->OnBeginDelayRespawn(DelayTime);
+    }
+}
+    
+void AShooterPlayerController::ClientRespawnComplete_Implementation()
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        MyShooterHUD->OnRespawnComplete();
+    }
 }
 

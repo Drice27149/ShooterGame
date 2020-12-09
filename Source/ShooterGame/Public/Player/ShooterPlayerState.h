@@ -15,7 +15,32 @@ class SHOOTERGAME_API AShooterPlayerState : public APlayerState
 	GENERATED_BODY()
 
 public:
+    void ScoreKill();
+    
+    void ScoreDeath();
+    
+    UFUNCTION(BlueprintCallable)
+    int32 GetDeathCount();
+    
+    UFUNCTION(BlueprintCallable)
+    int32 GetKillCount();
 
-    UPROPERTY(Replicated, BlueprintReadWrite, Category = "ShooterName")
-    FString ShooterName;
+    UFUNCTION(BlueprintCallable)
+    FString GetShooterPlayerName();
+    
+    UFUNCTION(BlueprintCallable)
+    void SetShooterPlayerName(FString NewName);
+    
+    UFUNCTION(Reliable, Server)
+    void ServerSetShooterPlayerName(const FString& NewName);
+
+private:
+    UPROPERTY(Replicated)
+    FString ShooterPlayerName;
+    
+    UPROPERTY(Replicated)
+    int32 KillCount;
+    
+    UPROPERTY(Replicated)
+    int32 DeathCount;
 };

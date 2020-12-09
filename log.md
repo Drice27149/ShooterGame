@@ -201,7 +201,6 @@ todo:
 #### 2020.12.7
 
 * discovering camera, seems like attach camera to weapon is ok? or do nothing
-
 * basic inventory & weapon switch
 
   * constraint: two strong fire, one melee, one default gun, two others(projectile or portion)
@@ -215,17 +214,71 @@ todo:
     * server: change current weapon
     * remote client: onRep_current weapon: simulate
     * detach/attach is done in animation notify
-
 * bug: fire-effect's location is somewhat wrong...[fixed]
-
 * todo: 
 
-  * first person camera when shooting
-    * blueprint done, next step do it in c++
+  * first person camera when shooting [done]
+    * blueprint done, next step do it in c++ [done]
 * basic button(switch weapon, pick up, drop, fire)
   * kill notify?
   * main menu
   * level design
   * bug: laucher start fire need to be fixed
   * bug: camera conflict with weapon
+* next todo:
+  * hud & kill notify
+  * weapon left, right placement
+  * fire camera muzzle
+  * main menu & game over view
+  * basic level design
+
+#### 2020.12.9
+
+* HUD: hit notify, kill(killed) notify, respawn notify, health bar, ammo count, weapon type
+
+* ```c++
+  // HUD.cpp
+  // called by SimulateHit
+  void NotifyHit(FTakeHitInfo TakeHitInfo);
+      
+  // called by OnRep_Health
+  void NotifyHealtChange(float CurrentHealth, float MaxHealth);
+      
+  // weapon type in the following three ?
+  void NotifyKill(APlayerState KilledPlayerState);
+  
+  void NotifySelfDeath(APlayerState KillerPlayerState);
+  
+  void NotifyOtherDeath(APlayerState KillerPlayerState, APlayerState KilledPlayerState); 
+      
+  void NotifyBeginRespawn(float RespawnTime);
+      
+  void NotifyRespawn();
+  
+  // called by switch to new weapon, will reset ammo too
+  void NotifyWeaponChange(AWeapon NewWeapon);
+  
+  // called by OnRep_Ammo ?
+  void NotifyAmmoChange(float NewAmmo)
+  ```
+
+* ```c++
+  // GameMode.cpp
+  void Killed(PC KillerPlayerState, PC KilledPlayerState)
+  ```
+
+  
+
+* ```c++
+  // Controller.cpp
+  // client
+  void NotifyKill(APlayerState KilledPlayerState)
+  
+  // client
+  void NotifySelfDeath(APlayerState KillerPlayerState)
+  
+  // client
+  void NotifyOtherDeath(APlayerState KillerPlayerState, APlayerState KilledPlayerState)
+  ```
+
 * 

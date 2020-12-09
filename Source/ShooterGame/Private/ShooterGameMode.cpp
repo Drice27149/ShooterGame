@@ -16,6 +16,8 @@ AShooterGameMode::AShooterGameMode()
     HUDClass = PlayerHUDBPClass.Class;
 	PlayerControllerClass = AShooterPlayerController::StaticClass();
     PlayerStateClass = AShooterPlayerState::StaticClass();
+    
+    RespawnTime = 8.0f;
 }
 
 void AShooterGameMode::StartPlay()
@@ -75,7 +77,7 @@ void AShooterGameMode::HoldingMatch()
         GetWorldTimerManager().SetTimer(MatchTimer, this, &AShooterGameMode::HoldingMatch, OneSecond, false);
     }
     
-    // notify all client match timer change
+    // broadcast match timer change
     for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
     {
         AShooterPlayerController* MyController = Cast<AShooterPlayerController>(*It);
@@ -111,6 +113,32 @@ void AShooterGameMode::HandleHitScore(AShooterCharacter* ShooterPawn,float Score
                 MyController->ClientScoreChange();
             }
         }
+    }
+}
+
+void AShooterGameMode::Killed(AShooterPlayerController* KillerPC, AShooterPlayerController* KilledPC)
+{
+    AShooterPlayerState* KillerPlayerState = KillerPC?Cast<AShooterPlayerState>(KillerPC->PlayerState):NULL;
+    AShooterPlayerState* KilledPlayerState = KilledPC?Cast<AShooterPlayerState>(KilledPC->PlayerState):NULL;
+    
+    if(KillerPlayerState && KilledPlayerState)
+    {
+        // update death and kill counter 
+        KillerPlayerState->ScoreKill();
+        KilledPlayerState->ScoreDeath();
+        
+        // broadcast death message
+        for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+        {
+            AShooterPlayerController* MyController = Cast<AShooterPlayerController>(*It);
+            if(MyController != NULL)
+            {
+                MyController->NotifyKilled(KillerPlayerState, KilledPlayerState);
+            }
+        }
+        
+        // respawn the killed player 
+        KilledPC->BeginDelayedRespawn(RespawnTime);
     }
 }
 

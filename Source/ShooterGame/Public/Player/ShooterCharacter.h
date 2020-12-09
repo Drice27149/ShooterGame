@@ -10,7 +10,7 @@
 class AWeapon;
 class UAnimMontage;
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FTakeHitInfo
 {
 	GENERATED_USTRUCT_BODY()
@@ -63,7 +63,7 @@ public:
     
     float PlayCharacterMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1.0f);
     
-    void PlayHit(AActor* OtherActor, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName);
+    void PlayHit(AShooterCharacter* OtherCharacter, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName);
 
     void SetPickUpWeapon(AWeapon* PickUpWeapon);
 

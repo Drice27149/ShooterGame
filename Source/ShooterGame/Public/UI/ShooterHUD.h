@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "Player/ShooterCharacter.h"
 #include "ShooterHUD.generated.h"
 
-class FString;
+class AShooterPlayerState;
 
 /**
  * 
@@ -34,4 +35,28 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent, Category = "PickUpWeapon")
     void OnPickUpWeaponChange(const FString& NewWeaponName);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnKill(AShooterPlayerState* KilledPlayerState);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnSelfDeath(AShooterPlayerState* KillerPlayerState);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnOtherDeath(AShooterPlayerState* KillerPlayerState, AShooterPlayerState* KilledPlayerState);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnBeginDelayRespawn(float DelayTime);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnRespawnComplete();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnHealthChange(float NewHealth, float Maxhealth);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnWeaponChange(class AWeapon* Weapon);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnHit(const FTakeHitInfo& TakeHitInfo);
 };

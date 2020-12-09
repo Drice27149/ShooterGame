@@ -14,7 +14,28 @@ class SHOOTERGAME_API AShooterPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-public:
+public:    
+    void BeginDelayedRespawn(float DelayedTime);
+    
+    void RespawnPlayerPawn();
+    
+    void NotifyKilled(AShooterPlayerState* KillerPlayerState, AShooterPlayerState* KilledPlayerState);
+    
+    UFUNCTION(Reliable, Client)
+    void ClientNotifyKill(class AShooterPlayerState* KilledPlayerState);
+    
+    UFUNCTION(Reliable, Client)
+    void ClientNotifySelfDeath(class AShooterPlayerState* KillerPlayerState);
+    
+    UFUNCTION(Reliable, Client)
+    void ClientNotifyOtherDeath(class AShooterPlayerState* KillerPlayerState, class AShooterPlayerState* KilledPlayerState);
+    
+    UFUNCTION(Reliable, Client)
+    void ClientBeginDelayRespawn(float DelayTime);
+    
+    UFUNCTION(Reliable, Client)
+    void ClientRespawnComplete();
+    
     UFUNCTION(Reliable, Client)
     void ClientMatchStart();
 
@@ -29,10 +50,6 @@ public:
 
     UFUNCTION(Reliable, Client)
     void ClientRecieveMessage(const FString& Message);
-    
-    void RespawnPlayerPawn();
-    
-    void BeginDelayedRespawn(float DelayedTime);
     
 private:
     struct FTimerHandle RespawnTimer;

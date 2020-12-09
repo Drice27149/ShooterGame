@@ -9,6 +9,7 @@
 #include "ShooterGameMode.generated.h"
 
 class AShooterCharacter;
+class AShooterPlayerController;
 
 enum EMatchState{
     BeforeMatch,
@@ -29,12 +30,15 @@ public:
 
     /** set up matchtimer **/
     virtual void StartPlay() override;
+    
+    void Killed(AShooterPlayerController* KillerPC, AShooterPlayerController* KilledPC);
 
     /** display remain time on UI/hud **/
     UFUNCTION(BlueprintCallable, Category = "Gameplay")
     int GetStateRemainTime();
 
 protected:
+    
     void BeginMatch();
     
     /** called every second during match, used to count down **/
@@ -45,7 +49,9 @@ private:
     
     const int MatchDuration = 20;
     
-    const double OneSecond = 1.0f;
+    const float OneSecond = 1.0f;
+    
+    float RespawnTime;
     
     EMatchState MatchState;
     

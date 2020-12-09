@@ -61,7 +61,9 @@ void AExplosionProjectile::Explode()
         {
             FVector HitVector = HitCharacter->GetActorLocation() - GetActorLocation();
             FVector HitImpulse = HitVector * ExplodeImpulseScale;
-            HitCharacter->PlayHit(this, EHitType::HeavyHit, ExplosionDamage, HitVector, HitImpulse, FName(TEXT("")));
+            AShooterCharacter* OwnerCharacter = Cast<AShooterCharacter>(GetInstigator());
+            
+            HitCharacter->PlayHit(OwnerCharacter, EHitType::HeavyHit, ExplosionDamage, HitVector, HitImpulse, FName(TEXT("")));
         }
     }
 
