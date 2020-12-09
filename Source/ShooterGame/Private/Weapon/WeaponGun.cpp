@@ -5,6 +5,7 @@
 #include "ShooterGameType.h"
 #include "Weapon/ShooterProjectile.h"
 #include "Player/ShooterCharacter.h"
+#include "Player/ShooterPlayerController.h"
 
 
 // Sets default values
@@ -22,13 +23,7 @@ AWeaponGun::AWeaponGun()
 
 bool AWeaponGun::CanFire()
 {
-    if(BulletCount>0)
-    {
-        return true;
-    }
-    else{
-        return false;
-    }
+    return AmmoCount > 0;
 }
 
 int AWeaponGun::GetWeaponTypeId()
@@ -57,7 +52,7 @@ void AWeaponGun::StartFire()
 
 void AWeaponGun::ServerFireWeapon_Implementation()
 {
-    BulletCount--;
+    AmmoCount--;
     //call simulate function on remote client
     BurstCounter++;
 }
@@ -66,7 +61,21 @@ void AWeaponGun::SimulateFireWeapon()
 {
     OwnerCharacter->PlayCharacterMontage(FireMontage_Character);
     PlayWeaponMontage(FireMontage_Weapon);
+
+    if(bAiming)
+    {
+        // simulate camera shake on local player
+        AShooterPlayerController* MyShooterPC = OwnerCharacter?Cast<AShooterPlayerController>(OwnerCharacter->GetController()):NULL;
+        if(MyShooterPC && MyShooterPC->IsLocalController())
+        {
+            if(FireCameraShake)
+            {
+                MyShooterPC->ClientPlayCameraShake(FireCameraShake, 1.0f);
+            }
+        }
+    }
 }
+
 
 void AWeaponGun::OnRep_BurstCounter()
 {
@@ -80,9 +89,6 @@ void AWeaponGun::ServerNotifyHit_Implementation(FHitResult HitResult)
         HitCharacter->PlayHit(OwnerCharacter, EHitType::NormalHit, WeaponGunDamage, 
         FirePointComp->GetForwardVector(), FirePointComp->GetForwardVector(), HitResult.BoneName);
     }
-    
-    // debug 
-    FireVector(HitResult.Location);
     
     // update HitNotify for remote client to simulate
     FHitNotify NewNotify;

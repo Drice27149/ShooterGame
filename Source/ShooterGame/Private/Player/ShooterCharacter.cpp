@@ -123,11 +123,12 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
     DOREPLIFETIME(AShooterCharacter, bRunning);
+    DOREPLIFETIME(AShooterCharacter, bAiming);
     DOREPLIFETIME(AShooterCharacter, LastHitInfo);
-    DOREPLIFETIME(AShooterCharacter, Health);
     
     DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(AShooterCharacter, bBusy, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(AShooterCharacter, Health, COND_OwnerOnly);
     // owner alreay known change of weapon and simulation was done beforehead
     DOREPLIFETIME_CONDITION(AShooterCharacter, CurrentWeapon, COND_SkipOwner);
 }
@@ -234,6 +235,8 @@ void AShooterCharacter::OnAim()
     {
         FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
         FollowCamera->AttachToComponent(CurrentWeapon->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->CameraSocket);
+        // replicate aiming to determine animation
+        ServerSetAiming(true);
     }
 }
     
@@ -243,7 +246,19 @@ void AShooterCharacter::OnUnAim()
     {
         FollowCamera->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
         FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        // replicate aiming to determine animation
+        ServerSetAiming(false);
     }
+}
+
+bool AShooterCharacter::IsAiming()
+{
+    return bAiming;
+}
+
+void AShooterCharacter::ServerSetAiming_Implementation(bool Value)
+{
+    bAiming = Value;
 }
 
 void AShooterCharacter::SwitchToNewWeapon(AWeapon* NewWeapon)
@@ -512,5 +527,16 @@ void AShooterCharacter::DropWeaponMesh()
     if(LastEquipWeapon)
     {
         LastEquipWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    }
+}
+
+void AShooterCharacter::OnRep_Health()
+{
+    // notify HUD health change
+    AShooterPlayerController* MyShooterPlayerController = Cast<AShooterPlayerController>(GetController());
+    AShooterHUD* MyShooterHUD = MyShooterPlayerController?(Cast<AShooterHUD>(MyShooterPlayerController->GetHUD())):NULL;
+    if(MyShooterHUD)
+    {
+        MyShooterHUD->OnHealthChange(Health, MaxHealth);
     }
 }

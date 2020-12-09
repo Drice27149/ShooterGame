@@ -56,11 +56,15 @@ void AShooterPlayerController::ClientMatchEnd_Implementation()
 void AShooterPlayerController::BeginDelayedRespawn(float DelayedTime)
 {
     GetWorldTimerManager().SetTimer(RespawnTimer, this, &AShooterPlayerController::RespawnPlayerPawn, DelayedTime, false);
+    // notify hud begin respawn
+    ClientBeginDelayRespawn(DelayedTime);
 }
 
 void AShooterPlayerController::RespawnPlayerPawn()
 {
     ServerRestartPlayer();
+    // notify hud respawn complete
+    ClientRespawnComplete();
 }
 
 void AShooterPlayerController::NotifyKilled(AShooterPlayerState* KillerPlayerState, AShooterPlayerState* KilledPlayerState)

@@ -52,6 +52,9 @@ public:
     bool IsRunning();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
+    bool IsAiming();
+    
+    UFUNCTION(BlueprintCallable, Category = "StateMachine")
     FRotator GetAimOffset();
     
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
@@ -137,6 +140,9 @@ private:
     UPROPERTY(Replicated)
     bool bBusy = false;
 
+    UPROPERTY(Replicated)
+    bool bAiming = false;
+
     UPROPERTY(ReplicatedUsing = OnRep_PickUpWeapon)
     AWeapon* PickUpWeapon;
     
@@ -158,6 +164,9 @@ private:
     UFUNCTION(Reliable, Server)
     void ServerSetRunning(bool Value);
     
+    UFUNCTION(Reliable, Server)
+    void ServerSetAiming(bool Value);
+    
     UFUNCTION()
     void OnRep_PickUpWeapon();
     
@@ -166,6 +175,9 @@ private:
     
     UFUNCTION()
     void OnRep_LastHitInfo();
+    
+    UFUNCTION()
+    void OnRep_Health();
     
     void OnDeath();
     
@@ -185,7 +197,7 @@ protected:
     UPROPERTY()
     AWeapon* LastEquipWeapon;
 
-    UPROPERTY(Replicated, BlueprintReadOnly)
+    UPROPERTY(Replicated, ReplicatedUsing = OnRep_Health)
     float Health;
     
     UPROPERTY(EditDefaultsOnly, Category = "Character Camera")

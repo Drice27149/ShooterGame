@@ -26,6 +26,8 @@ void AWeapon::BeginPlay(){
         RootComp->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnWeaponOverlapBegin);
         RootComp->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnWeaponOverlapEnd);
     }
+    
+    AmmoCount = MaxAmmo;
 }
 
 void AWeapon::SetOwnerCharacter(AShooterCharacter* NewOwnerCharacter)
@@ -40,6 +42,13 @@ void AWeapon::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifeti
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
     DOREPLIFETIME(AWeapon, OwnerCharacter);
+    
+    DOREPLIFETIME_CONDITION(AWeapon, AmmoCount, COND_OwnerOnly);
+}
+
+int32 AWeapon::GetAmmoCount()
+{
+    return AmmoCount;
 }
 
 float AWeapon::PlayWeaponMontage(UAnimMontage* AnimMontage, float InPlayRate)

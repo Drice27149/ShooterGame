@@ -9,6 +9,7 @@ class AShooterCharacter;
 class UAnimMontage;
 class FName;
 class UPrimitiveComponent;
+class UCameraShake;
 
 UCLASS()
 class SHOOTERGAME_API AWeapon : public AActor
@@ -38,7 +39,11 @@ public:
     
     bool HasOwner();
     
+    UFUNCTION(BlueprintCallable)
     FString GetWeaponName();
+    
+    UFUNCTION(BlueprintCallable)
+    int32 GetAmmoCount();
     
     class USkeletalMeshComponent* GetMesh();
     
@@ -62,6 +67,15 @@ protected:
     /** replicate for calling cosmetic function on owner character **/
     UPROPERTY(Replicated)
     AShooterCharacter* OwnerCharacter;
+    
+    UPROPERTY(Replicated)
+    int32 AmmoCount;
+    
+    UPROPERTY(EditDefaultsOnly)
+    int32 MaxAmmo;
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf <UCameraShake> FireCameraShake;
 
     UPROPERTY(EditDefaultsOnly, Category = "CollisionComp")
     class USphereComponent* RootComp;
