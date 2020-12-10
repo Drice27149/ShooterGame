@@ -132,6 +132,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
     DOREPLIFETIME(AShooterCharacter, bRunning);
     DOREPLIFETIME(AShooterCharacter, bAiming);
     DOREPLIFETIME(AShooterCharacter, LastHitInfo);
+    DOREPLIFETIME(AShooterCharacter, bCheat);
     
     DOREPLIFETIME_CONDITION(AShooterCharacter, PickUpWeapon, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(AShooterCharacter, bBusy, COND_OwnerOnly);
@@ -228,6 +229,9 @@ void AShooterCharacter::OnDrop()
     {
         LastEquipWeapon = CurrentWeapon;
         LastEquipWeapon->SimulateDrop();
+        // fix listen server issue
+        LastEquipWeapon->SetOwnerCharacter(NULL);
+        
         CurrentWeapon = NULL;
         //delete weapon from inventory
         Inventory.RemoveAt(CurrentWeaponIndex);
@@ -372,6 +376,8 @@ void AShooterCharacter::OnRep_PickUpWeapon()
 void AShooterCharacter::SetPickUpWeapon(AWeapon* NewPickUpWeapon)
 {
     PickUpWeapon = NewPickUpWeapon;
+    // fix listen server issue
+    OnRep_PickUpWeapon();
 }
 
 void AShooterCharacter::OnRep_CurrentWeapon(AWeapon* LastWeapon)
@@ -409,6 +415,8 @@ void AShooterCharacter::PlayHit(AShooterCharacter* OtherCharacter, EHitType HitT
     NewHitInfo.HitBoneName = HitBoneName;
  
     Health -= HitDamage;
+    // fix listen server issue
+    OnRep_Health();
     
     if(Health > 0)
     {
@@ -440,6 +448,8 @@ void AShooterCharacter::PlayHit(AShooterCharacter* OtherCharacter, EHitType HitT
     }
     
     LastHitInfo = NewHitInfo;
+    // fix listen server issue
+    OnRep_LastHitInfo();
 }
 
 void AShooterCharacter::OnRep_LastHitInfo()
@@ -496,9 +506,6 @@ void AShooterCharacter::OnDeath()
     float TimeGap = 2.0f;
     DetachFromControllerPendingDestroy();
     SetLifeSpan(TimeGap);
-    
-    // call simulation on server
-    SimulateDeath();
 }
 
 void AShooterCharacter::MulticastPlayMontage_Implementation(UAnimMontage* AnimMontage, bool bSkipOwner)

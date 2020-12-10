@@ -289,5 +289,27 @@ todo:
 
 #### 2020.12.10
 
-* looking into session
 * main menu ui 
+  * host
+  * join
+* game over, should be able to end session and go back to menu
+  * will be coded in player controller, use game instance to create/join/destroy session
+
+* launcher is buggy
+  * ammo not minus
+  * fire direction incorrect
+  * aim offset incorrect
+* listen server is buggy
+  * OnRep_Health() is not called
+  * hit animation is not called
+  * weapon can't be picked up
+
+#### 2020.12.11
+
+* fix listen server issue
+  * OnRep_health
+  * pick up
+  * playhit 
+* game over ui
+  * pure bp ? 
+* 

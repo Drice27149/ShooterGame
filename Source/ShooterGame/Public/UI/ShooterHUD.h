@@ -18,21 +18,6 @@ class SHOOTERGAME_API AShooterHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
-    void LoadMatchInfoWidget();
-    
-    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
-    void NotifyPlayerNameChange();
-    
-    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
-    void NotifyScoreChange();
-    
-    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
-    void NotifyMatchMessage(const FString& Message);
-    
-    UFUNCTION(BlueprintImplementableEvent, Category = "MatchInformation")
-    void NotifyTimeChange(const FString& NewTime);
-    
     UFUNCTION(BlueprintImplementableEvent, Category = "PickUpWeapon")
     void OnPickUpWeaponChange(const FString& NewWeaponName);
     
@@ -62,4 +47,13 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent)
     void OnAmmoCountChange(int32 AmmoCount);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnMatchTimeChange(int NewTime);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnMatchStart();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnMatchEnd();
 };

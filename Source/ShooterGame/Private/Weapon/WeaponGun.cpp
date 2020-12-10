@@ -40,8 +40,6 @@ void AWeaponGun::StartFire()
     
     if(GetWorld()->LineTraceSingleByChannel(Hit, StartTrace, EndTrace, ECC_WorldDynamic, CollisionParams)){
         ServerNotifyHit(Hit);
-        //debug
-        FireVector(Hit.Location);
         
         SimulateWeaponHit(Hit.Location);
     }
@@ -55,6 +53,9 @@ void AWeaponGun::ServerFireWeapon_Implementation()
     AmmoCount--;
     //call simulate function on remote client
     BurstCounter++;
+    
+    // fix listen server issue
+    OnRep_BurstCounter();
 }
 
 void AWeaponGun::SimulateFireWeapon()
@@ -96,22 +97,17 @@ void AWeaponGun::ServerNotifyHit_Implementation(FHitResult HitResult)
     NewNotify.HitCounter = HitNotify.HitCounter + 1;
     HitNotify = NewNotify;
     
-    // debug
-    FireVector(HitNotify.HitLocation);
+    // fix listen server issue
+    OnRep_HitNotify();
 }
 
 void AWeaponGun::OnRep_HitNotify()
 {
-    // debug
-    FireVector(HitNotify.HitLocation);
     SimulateWeaponHit(HitNotify.HitLocation);
 }
 
 void AWeaponGun::SimulateWeaponHit(FVector HitLocation)
 {
-    // debug
-    FireVector(HitLocation);
-    
     if(HitEffect != NULL)
     {
         UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, HitLocation, FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);

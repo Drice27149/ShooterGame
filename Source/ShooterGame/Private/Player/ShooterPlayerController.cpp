@@ -7,11 +7,6 @@
 
 void AShooterPlayerController::ClientScoreChange_Implementation()
 {
-    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
-    if(MyShooterHUD != NULL)
-    {
-        MyShooterHUD->NotifyScoreChange();
-    }
 }
 
 void AShooterPlayerController::ClientTimeChange_Implementation(const int& NewTime)
@@ -19,18 +14,12 @@ void AShooterPlayerController::ClientTimeChange_Implementation(const int& NewTim
     AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
     if(MyShooterHUD != NULL)
     {
-        FString TimeText = FString::Printf(TEXT("%d"),NewTime);
-        MyShooterHUD->NotifyTimeChange(TimeText);
+        MyShooterHUD->OnMatchTimeChange(NewTime);
     }
 }
 
 void AShooterPlayerController::ClientRecieveMessage_Implementation(const FString& Message)
 {
-    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
-    if(MyShooterHUD != NULL)
-    {
-        MyShooterHUD->NotifyMatchMessage(Message);
-    }
 }
 
 void AShooterPlayerController::ClientMatchStart_Implementation()
@@ -38,8 +27,7 @@ void AShooterPlayerController::ClientMatchStart_Implementation()
     AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
     if(MyShooterHUD != NULL)
     {
-        FString StartMessage = FString::Printf(TEXT("Game Start"));
-        MyShooterHUD->NotifyMatchMessage(StartMessage);
+        MyShooterHUD->OnMatchStart();
     }
 }
 
@@ -48,8 +36,7 @@ void AShooterPlayerController::ClientMatchEnd_Implementation()
     AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
     if(MyShooterHUD != NULL)
     {
-        FString EndMessage = FString::Printf(TEXT("Game End"));
-        MyShooterHUD->NotifyMatchMessage(EndMessage);
+        MyShooterHUD->OnMatchEnd();
     }
 }
 

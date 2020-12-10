@@ -17,7 +17,7 @@ AShooterGameMode::AShooterGameMode()
 	PlayerControllerClass = AShooterPlayerController::StaticClass();
     PlayerStateClass = AShooterPlayerState::StaticClass();
     
-    RespawnTime = 8.0f;
+    RespawnTime = 5.0f;
 }
 
 void AShooterGameMode::StartPlay()

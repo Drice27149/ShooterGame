@@ -39,8 +39,11 @@ void AExplosionLauncher::StartFire()
 
 void AExplosionLauncher::ServerFireLauncher_Implementation(FTransform FireTransform, FVector FireVector)
 {
+    AmmoCount--;
     // call simulate funtion on remote client
     BurstCounter++;
+    // fix listen server issue
+    OnRep_BurstCounter();
     
     // spawn projectile on server, which will be repliated to client
     if(ProjectileClass != NULL)

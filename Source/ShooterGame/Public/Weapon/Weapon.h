@@ -76,7 +76,7 @@ protected:
     UPROPERTY(ReplicatedUsing = OnRep_AmmoCount)
     int32 AmmoCount;
     
-    UPROPERTY(EditDefaultsOnly)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     int32 MaxAmmo;
 
     UPROPERTY(EditDefaultsOnly)
