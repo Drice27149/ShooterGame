@@ -59,4 +59,7 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent)
     void OnHit(const FTakeHitInfo& TakeHitInfo);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnAmmoCountChange(int32 AmmoCount);
 };

@@ -62,7 +62,7 @@ void AWeaponGun::SimulateFireWeapon()
     OwnerCharacter->PlayCharacterMontage(FireMontage_Character);
     PlayWeaponMontage(FireMontage_Weapon);
 
-    if(bAiming)
+    if(OwnerCharacter->IsAiming())
     {
         // simulate camera shake on local player
         AShooterPlayerController* MyShooterPC = OwnerCharacter?Cast<AShooterPlayerController>(OwnerCharacter->GetController()):NULL;

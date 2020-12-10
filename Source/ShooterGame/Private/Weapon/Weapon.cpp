@@ -5,7 +5,6 @@
 #include "ShooterGame.h"
 #include "Player/ShooterCharacter.h"
 
-// Sets default values
 AWeapon::AWeapon()
 {
     RootComp = CreateDefaultSubobject<USphereComponent>(TEXT("RootComp"));
@@ -20,6 +19,7 @@ AWeapon::AWeapon()
 void AWeapon::BeginPlay(){
     Super::BeginPlay();
     
+    // set up collision for pick up detection
     RootComp->SetCollisionProfileName(TEXT("OverlapAll"));
     if(GetLocalRole() == ROLE_Authority)
     {
@@ -44,6 +44,8 @@ void AWeapon::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifeti
     DOREPLIFETIME(AWeapon, OwnerCharacter);
     
     DOREPLIFETIME_CONDITION(AWeapon, AmmoCount, COND_OwnerOnly);
+    // replicated breload to call cosmetic on remote client
+    DOREPLIFETIME_CONDITION(AWeapon, bReload, COND_SkipOwner);
 }
 
 int32 AWeapon::GetAmmoCount()
@@ -187,4 +189,39 @@ USkeletalMeshComponent* AWeapon::GetMesh()
     return Mesh;
 }
 
+void AWeapon::Reload()
+{
+    SimulateReload();
+    ServerReload();
+}
+
+void AWeapon::SimulateReload()
+{
+    if(OwnerCharacter)
+    {
+        OwnerCharacter->PlayCharacterMontage(ReloadMontage_Character);
+        PlayWeaponMontage(ReloadMontage_Weapon);
+    }
+}
+
+void AWeapon::ServerReload_Implementation()
+{
+    AmmoCount = MaxAmmo;
+    // call simulation on remote client
+    bReload = !bReload;
+}
+
+void AWeapon::OnRep_bReload()
+{
+    SimulateReload();
+}
+
+void AWeapon::OnRep_AmmoCount()
+{
+    // notify player ammo change to update HUD display
+    if(OwnerCharacter)
+    {
+        OwnerCharacter->NotifyAmmoCountChange(AmmoCount);
+    }
+}
 

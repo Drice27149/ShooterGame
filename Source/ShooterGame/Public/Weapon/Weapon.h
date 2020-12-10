@@ -29,6 +29,8 @@ public:
     
     void OnDrop();
     
+    void Reload();
+    
     void SimulateEquip();
     
     void SimulateUnequip();
@@ -68,7 +70,10 @@ protected:
     UPROPERTY(Replicated)
     AShooterCharacter* OwnerCharacter;
     
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = OnRep_bReload)
+    bool bReload;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_AmmoCount)
     int32 AmmoCount;
     
     UPROPERTY(EditDefaultsOnly)
@@ -97,6 +102,12 @@ protected:
     
     UPROPERTY(EditDefaultsOnly, Category = "Montage")
     UAnimMontage* FireMontage_Weapon;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Montage")
+    UAnimMontage* ReloadMontage_Character;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Montage")
+    UAnimMontage* ReloadMontage_Weapon;
 
     float PlayWeaponMontage(UAnimMontage* AnimMontage, float InPlayRate = 1.0f);
     
@@ -105,14 +116,25 @@ protected:
 
 private:    
     UFUNCTION(Reliable, Server)
+    void ServerReload();
+
+    UFUNCTION(Reliable, Server)
     void ServerHandleFiring();
     
     UFUNCTION(Reliable, NetMulticast)
     void MultiCastHandleFiring();
     
     UFUNCTION()
+    void OnRep_bReload();
+    
+    UFUNCTION()
+    void OnRep_AmmoCount();
+    
+    UFUNCTION()
     void OnWeaponOverlapBegin(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const struct FHitResult& SweepResult);
 
     UFUNCTION()
     void OnWeaponOverlapEnd(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+    void SimulateReload();
 };

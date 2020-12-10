@@ -69,6 +69,8 @@ public:
     void PlayHit(AShooterCharacter* OtherCharacter, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName);
 
     void SetPickUpWeapon(AWeapon* PickUpWeapon);
+    
+    void NotifyAmmoCountChange(int32 AmmoCount);
 
 protected:
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentWeapon)
@@ -137,12 +139,17 @@ protected:
     void OnUnAim();
     
 private:
+    struct FTimerHandle CheatTimer;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_bCheat)
+    bool bCheat = false;
+    
     UPROPERTY(Replicated)
     bool bBusy = false;
 
     UPROPERTY(Replicated)
     bool bAiming = false;
-
+    
     UPROPERTY(ReplicatedUsing = OnRep_PickUpWeapon)
     AWeapon* PickUpWeapon;
     
@@ -179,6 +186,9 @@ private:
     UFUNCTION()
     void OnRep_Health();
     
+    UFUNCTION()
+    void OnRep_bCheat();
+    
     void OnDeath();
     
     void SimulateHit();
@@ -186,6 +196,10 @@ private:
     void SimulateDeath();
     
     void SwitchToNewWeapon(AWeapon* NewWeapon);
+    
+    void EnableCheat();
+    
+    void UnableCheat();
     
 protected:
     UPROPERTY()
@@ -199,6 +213,9 @@ protected:
 
     UPROPERTY(Replicated, ReplicatedUsing = OnRep_Health)
     float Health;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Cheat")
+	float RespawnCheatTime = 5.0f;
     
     UPROPERTY(EditDefaultsOnly, Category = "Character Camera")
 	class USpringArmComponent* CameraBoom;

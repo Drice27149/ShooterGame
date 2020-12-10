@@ -226,15 +226,15 @@ todo:
   * bug: laucher start fire need to be fixed
   * bug: camera conflict with weapon
 * next todo:
-  * hud & kill notify
-  * weapon left, right placement
-  * fire camera muzzle
-  * main menu & game over view
+  * hud & kill notify [done]
+  * weapon left, right placement [can be fake by setting different unused socket]
+  * fire camera muzzle [pending]
+  * main menu & after game over, calculate result
   * basic level design
 
 #### 2020.12.9
 
-* HUD: hit notify, kill(killed) notify, respawn notify, health bar, ammo count, weapon type
+* HUD: hit notify, kill(killed) notify, respawn notify, health bar, ammo count, weapon type [basically done]
 
 * ```c++
   // HUD.cpp
@@ -281,4 +281,13 @@ todo:
   void NotifyOtherDeath(APlayerState KillerPlayerState, APlayerState KilledPlayerState)
   ```
 
-* 
+* todo:
+
+  * main menu
+  * session (may be related to main menu)
+  * level design
+
+#### 2020.12.10
+
+* looking into session
+* main menu ui 

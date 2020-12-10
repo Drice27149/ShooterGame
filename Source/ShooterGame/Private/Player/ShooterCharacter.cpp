@@ -44,6 +44,13 @@ void AShooterCharacter::BeginPlay()
     
     CurrentWeapon = NULL;
     Health = MaxHealth;
+    
+    // protect player from any attack for a short period 
+    if(GetLocalRole() == ROLE_Authority)
+    {
+        EnableCheat();
+        GetWorldTimerManager().SetTimer(CheatTimer, this, &AShooterCharacter::UnableCheat, RespawnCheatTime, false);
+    }
 }
 
 bool AShooterCharacter::IsRunning()
@@ -324,10 +331,9 @@ float AShooterCharacter::PlayCharacterMontage(UAnimMontage* AnimMontage, float I
 
 void AShooterCharacter::OnStartReload()
 {
-    AWeaponGun* CurrentWeaponGun = Cast<AWeaponGun>(CurrentWeapon);
-    if(CurrentWeaponGun)
+    if(CurrentWeapon)
     {
-        CurrentWeaponGun->StartReload();
+        CurrentWeapon->Reload();
     }
 }
 
@@ -479,6 +485,7 @@ void AShooterCharacter::SimulateDeath()
     GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->SetComponentTickEnabled(false);
+    GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ragdoll"));
     GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
     GetMesh()->SetSimulatePhysics(true);
 }
@@ -486,7 +493,7 @@ void AShooterCharacter::SimulateDeath()
 void AShooterCharacter::OnDeath()
 {
     // pending to be destroyed
-    float TimeGap = 3.0f;
+    float TimeGap = 2.0f;
     DetachFromControllerPendingDestroy();
     SetLifeSpan(TimeGap);
     
@@ -539,4 +546,42 @@ void AShooterCharacter::OnRep_Health()
     {
         MyShooterHUD->OnHealthChange(Health, MaxHealth);
     }
+}
+
+void AShooterCharacter::NotifyAmmoCountChange(int32 AmmoCount)
+{
+    AShooterPlayerController* MyShooterPlayerController = Cast<AShooterPlayerController>(GetController());
+    AShooterHUD* MyShooterHUD = MyShooterPlayerController?(Cast<AShooterHUD>(MyShooterPlayerController->GetHUD())):NULL;
+    if(MyShooterHUD)
+    {
+        MyShooterHUD->OnAmmoCountChange(AmmoCount);
+    }
+}
+
+void AShooterCharacter::OnRep_bCheat()
+{
+    if(bCheat)
+    {
+        GetCapsuleComponent()->SetCollisionProfileName(TEXT("CheatPawn"));
+    }
+    else
+    {
+        GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+    }
+}
+
+void AShooterCharacter::EnableCheat()
+{
+    // will ignore any attack
+    bCheat = true;
+    // call on server
+    OnRep_bCheat();
+}
+    
+void AShooterCharacter::UnableCheat()
+{
+    // will go back to normal
+    bCheat = false;
+    // call on server
+    OnRep_bCheat();
 }
