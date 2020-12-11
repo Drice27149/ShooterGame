@@ -45,9 +45,9 @@ protected:
     void HoldingMatch();
     
 private:
-    const int WarmUpDuration = 10;
+    const int WarmUpDuration = 30;
     
-    const int MatchDuration = 20;
+    const int MatchDuration = 120;
     
     const float OneSecond = 1.0f;
     
