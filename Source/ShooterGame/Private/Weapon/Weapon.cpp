@@ -209,6 +209,10 @@ void AWeapon::ServerReload_Implementation()
     AmmoCount = MaxAmmo;
     // call simulation on remote client
     bReload = !bReload;
+    
+    // fix listen server issue
+    OnRep_bReload();
+    OnRep_AmmoCount();
 }
 
 void AWeapon::OnRep_bReload()

@@ -111,9 +111,12 @@ protected:
 
     float PlayWeaponMontage(UAnimMontage* AnimMontage, float InPlayRate = 1.0f);
     
+    UFUNCTION()
+    void OnRep_AmmoCount();
+    
     UFUNCTION(BlueprintImplementableEvent)
     void FireTest(int signal);
-
+    
 private:    
     UFUNCTION(Reliable, Server)
     void ServerReload();
@@ -126,9 +129,6 @@ private:
     
     UFUNCTION()
     void OnRep_bReload();
-    
-    UFUNCTION()
-    void OnRep_AmmoCount();
     
     UFUNCTION()
     void OnWeaponOverlapBegin(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const struct FHitResult& SweepResult);

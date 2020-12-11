@@ -38,14 +38,14 @@
      
   * #### 为了后续多人游戏的开发, 对上述的表现都实现了网络同步。
   
-  * 同步的原理也并不复杂, 对于动画状态机, 只要把驱动状态机的变量(Speed, Direction, crouch, jump...)等同步了, 动画状态机的表现就自动同步了; 对于俯仰, 可以参考[官方工程ShooterGame](https://docs.unrealengine.com/en-US/Resources/SampleGames/ShooterGame/index.html)代码中的实现: 调用```APawn::GetBaseAimRotation()```可以得到一个内置同步的Pitch; 对于Montage的播放, 一个可行的方案是使用RPC, 即客户端调用Server方法, 服务器上再调用Netmulticast方法实现每个客户端同步播放。
+     * 同步的原理也并不复杂, 对于动画状态机, 只要把驱动状态机的变量(Speed, Direction, crouch, jump...)等同步了, 动画状态机的表现就自动同步了; 对于俯仰, 可以参考[官方工程ShooterGame](https://docs.unrealengine.com/en-US/Resources/SampleGames/ShooterGame/index.html)代码中的实现: 调用```APawn::GetBaseAimRotation()```可以得到一个内置同步的Pitch; 对于Montage的播放, 一个可行的方案是使用RPC, 即客户端调用Server方法, 服务器上再调用Netmulticast方法实现每个客户端同步播放。
   
 
 
 
 ## 11.21~11.27
 
-* **演示视频**: [网盘链接](https://pan.baidu.com/s/1IoK7074rncVgkT_575BjDQ), 提取码: mfxj. **打包的安卓文件**: [链接](https://pan.baidu.com/s/1_SZWpLjT6kAt_l4vs-e_sg) 提取码: wfgb
+* **演示视频**: [网盘链接](https://pan.baidu.com/s/1IoK7074rncVgkT_575BjDQ),  提取码: mfxj. **打包的安卓文件**: [链接](https://pan.baidu.com/s/1_SZWpLjT6kAt_l4vs-e_sg) 提取码: wfgb
 
 * **本次内容**: 
 
@@ -63,11 +63,40 @@
   * **抛体枪械: 抛体命中角色立刻爆炸, 命中场景会反弹减速, 减速到一定程度后爆炸。根据不同的物理材质而改变反弹的速度反馈。爆炸效果为把一定范围内的物件和角色炸飞**。 
   
     * 子弹开启```simulate physic```和```enable gravity```, 发射时通过```AddImpulse```到子弹的```RootComponent```获得速度, 子弹就可以进行抛体运动了。
+    
     * 击中的碰撞检测注册```OnComponentHit```事件的回调函数, 在函数中判断击中的actor是否角色类型, 如果是则爆炸。
+    
     * 不同的速度反馈可以通过新建```physic material```类并应用到物体上, 修改```physic material```的```Resititution```来改变速度反馈, 属性值越大速度的衰减越少。
+    
     * 速度衰减的检测在子弹的每一个```Tick```中进行, 如果```GetVelocity().Size()```的结果过小则爆炸。
-    * 炸飞效果实现方式有很多, 我使用的是给子弹增加一个```RadialForceComponent```组件, 在爆炸的时候调用```FireImulse```方法给爆炸的球型区域中的物体施加冲量, 达到炸飞的效果。
     
+    * 炸飞效果实现方式有很多, 我使用的是给子弹增加一个```RadialForceComponent```组件, 在爆炸的时候调用```FireImulse```方法给爆炸的球型区域中的物体施加冲量, 达到炸飞的效果。 
     
+      
     
-    
+
+## 11.28~12.11
+
+* **演示视频**: [网盘链接](https://pan.baidu.com/s/169NMPem55QE6lg7mVVvPYQ), 提取码: 977k  **打包的安卓文件**: [上传中]
+
+* **本次内容**:  多玩家对战
+
+  *  一个玩家作为主机, 其他玩家加入游戏
+    * 直接的方法是主机玩家用 ```?listen```命令行参数启动游戏, 其他玩家启动游戏时输入主机listen的ip地址加入游戏
+    * 也可使使用```Create/Join/Destroy Session```的方法, 好处是不用输入命令行参数。
+    * 由于之前都是按照```Dedicated Server```来设计游戏的同步, 所以在```listen server```模式下一些代码需要改动, 主要涉及使用```RepNotify```触发的同步表现(开火, 装弹), 因为```listen server```控制的玩家```RepNotify```不会被自动调用。
+  *  玩家可以自由交战
+
+    * 由于之前的内容都是按照多人游戏的模式写的, 因此实现自由交战比较容易。简而言之就是服务器处理交战的逻辑, 客户端同步交战的表现。
+  *  死亡时有死亡表现, 死亡之后可以重生
+
+    * 死亡表现使用了布娃娃效果, 实现方法是恰当设置mesh的碰撞参数并开启物理模拟。
+    * 重生参考了官方ShooterGame工程, 在```PlayerController```中调用```ServerRestartPlayer()```
+
+  *  游戏结束后进入结算界面, 包括击杀数, 死亡数
+
+    * 击杀数和死亡数用同步变量记录在```PlayerState```中。
+
+    * 同样参考了官方ShooterGame工程, 在击杀事件发生时, 把击杀者和被击杀者上传到```GameMode```类中, 由```GameMode```负责广播击杀事件并修改```PlayerState```中记录的击杀数和死亡数。
+    * 游戏的时间在```GameMode```类中用一个计时器控制, 当游戏结束时广播通知所有客户端。客户端收到通知后, 显示游戏结束并从```GameState```中读取所有玩家的```PlayerState```, 再对击杀数和死亡数进行显示。
+

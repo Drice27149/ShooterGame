@@ -11,8 +11,8 @@ void AShooterPlayerState::GetLifetimeReplicatedProps( TArray< FLifetimeProperty 
 
 	DOREPLIFETIME( AShooterPlayerState, ShooterPlayerName );
     
-    DOREPLIFETIME_CONDITION(AShooterPlayerState, KillCount, COND_OwnerOnly);
-    DOREPLIFETIME_CONDITION(AShooterPlayerState, DeathCount, COND_OwnerOnly);
+    DOREPLIFETIME( AShooterPlayerState, KillCount );
+    DOREPLIFETIME( AShooterPlayerState, DeathCount );
 }
 
 FString AShooterPlayerState::GetShooterPlayerName()

@@ -5,6 +5,8 @@
 #include "ShooterGame.h"
 #include "Weapon/ExplosionProjectile.h"
 #include "Player/ShooterCharacter.h"
+#include "Player/ShooterPlayerController.h"
+#include "UI/ShooterHUD.h"
 
 AExplosionLauncher::AExplosionLauncher()
 {
@@ -44,6 +46,7 @@ void AExplosionLauncher::ServerFireLauncher_Implementation(FTransform FireTransf
     BurstCounter++;
     // fix listen server issue
     OnRep_BurstCounter();
+    OnRep_AmmoCount();
     
     // spawn projectile on server, which will be repliated to client
     if(ProjectileClass != NULL)
@@ -78,13 +81,25 @@ void AExplosionLauncher::SimulateLauncherFire()
     {
         OwnerCharacter->PlayCharacterMontage(FireMontage_Character);
         PlayWeaponMontage(FireMontage_Weapon);
+        
+        if(OwnerCharacter->IsAiming())
+        {
+            // simulate camera shake on local player
+            AShooterPlayerController* MyShooterPC = OwnerCharacter?Cast<AShooterPlayerController>(OwnerCharacter->GetController()):NULL;
+            if(MyShooterPC && MyShooterPC->IsLocalController())
+            {
+                if(FireCameraShake)
+                {
+                    MyShooterPC->ClientPlayCameraShake(FireCameraShake, 1.0f);
+                }
+            }
+        }
     }
 }
 
-
 bool AExplosionLauncher::CanFire()
 {
-    return true;
+    return AmmoCount > 0;
 }
 
 //todo: change it to EWeaponType: int8

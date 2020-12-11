@@ -51,27 +51,31 @@ void AWeaponGun::StartFire()
 void AWeaponGun::ServerFireWeapon_Implementation()
 {
     AmmoCount--;
-    //call simulate function on remote client
+    // call simulate function on remote client
     BurstCounter++;
     
     // fix listen server issue
     OnRep_BurstCounter();
+    OnRep_AmmoCount();
 }
 
 void AWeaponGun::SimulateFireWeapon()
 {
-    OwnerCharacter->PlayCharacterMontage(FireMontage_Character);
-    PlayWeaponMontage(FireMontage_Weapon);
-
-    if(OwnerCharacter->IsAiming())
+    if(OwnerCharacter)
     {
-        // simulate camera shake on local player
-        AShooterPlayerController* MyShooterPC = OwnerCharacter?Cast<AShooterPlayerController>(OwnerCharacter->GetController()):NULL;
-        if(MyShooterPC && MyShooterPC->IsLocalController())
+        OwnerCharacter->PlayCharacterMontage(FireMontage_Character);
+        PlayWeaponMontage(FireMontage_Weapon);
+
+        if(OwnerCharacter->IsAiming())
         {
-            if(FireCameraShake)
+            // simulate camera shake on local player
+            AShooterPlayerController* MyShooterPC = OwnerCharacter?Cast<AShooterPlayerController>(OwnerCharacter->GetController()):NULL;
+            if(MyShooterPC && MyShooterPC->IsLocalController())
             {
-                MyShooterPC->ClientPlayCameraShake(FireCameraShake, 1.0f);
+                if(FireCameraShake)
+                {
+                    MyShooterPC->ClientPlayCameraShake(FireCameraShake, 1.0f);
+                }
             }
         }
     }
