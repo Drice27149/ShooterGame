@@ -77,7 +77,7 @@
 
 ## 11.28~12.11
 
-* **演示视频**: [网盘链接](https://pan.baidu.com/s/169NMPem55QE6lg7mVVvPYQ), 提取码: 977k  **打包的安卓文件**: [上传中]
+* **演示视频**: [网盘链接](https://pan.baidu.com/s/169NMPem55QE6lg7mVVvPYQ), 提取码: 977k  **打包的安卓文件**: [网盘链接](https://pan.baidu.com/s/1ktCQkO4a7D-yqSBAI7XPVw), 提取码: su3h
 
 * **本次内容**:  多玩家对战
 
