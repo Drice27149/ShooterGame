@@ -306,10 +306,15 @@ todo:
 
 #### 2020.12.11
 
-* fix listen server issue
+* fix listen server issue [fix]
   * OnRep_health
   * pick up
   * playhit 
 * game over ui
   * pure bp ? 
-* 
+
+#### 2020.12.13
+
+*  ai quick start
+  * patrol
+  * chase
