@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "AIController.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Camera/CameraComponent.h"

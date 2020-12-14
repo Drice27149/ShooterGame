@@ -115,3 +115,22 @@ void AShooterPlayerController::ClientRespawnComplete_Implementation()
     }
 }
 
+void AShooterPlayerController::ClientNotifyKillAI_Implementation()
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        MyShooterHUD->OnKillAI();
+    }
+}
+    
+
+void AShooterPlayerController::ClientNotifyKillByAI_Implementation()
+{
+    AShooterHUD* MyShooterHUD = Cast<AShooterHUD>(GetHUD());
+    if(MyShooterHUD != NULL)
+    {
+        MyShooterHUD->OnKillByAI();
+    }
+}
+

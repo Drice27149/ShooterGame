@@ -51,6 +51,12 @@ public:
     UFUNCTION(Reliable, Client)
     void ClientRecieveMessage(const FString& Message);
     
+    UFUNCTION(Reliable, Client)
+    void ClientNotifyKillAI();
+    
+    UFUNCTION(Reliable, Client)
+    void ClientNotifyKillByAI();
+    
 private:
     struct FTimerHandle RespawnTimer;
 };

@@ -68,6 +68,7 @@ public:
     
     void PlayHit(AShooterCharacter* OtherCharacter, EHitType HitType, float HitDamage, FVector HitVector, FVector HitImpulse, FName HitBoneName);
 
+    UFUNCTION(BlueprintCallable)
     void SetPickUpWeapon(AWeapon* PickUpWeapon);
     
     void NotifyAmmoCountChange(int32 AmmoCount);

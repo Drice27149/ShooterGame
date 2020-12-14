@@ -318,3 +318,15 @@ todo:
 *  ai quick start
   * patrol
   * chase
+
+#### 2020.12.14
+
+* normal armless enemy (escape on receive damage)
+* enemy with rifle (alert and move to and fire)
+  * sound react & sight border
+  * alert on nearby attack
+* enemy with sinper (alert and take cover and fire)
+* second floor & wall & single way road needed
+* get sense class from...
+* eqs can be use to find cover/road/hiding spot
+* report event is necessary

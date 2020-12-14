@@ -435,12 +435,33 @@ void AShooterCharacter::PlayHit(AShooterCharacter* OtherCharacter, EHitType HitT
         
         AShooterPlayerController* KillerPC = OtherCharacter?Cast<AShooterPlayerController>(OtherCharacter->GetController()):NULL;
         AShooterPlayerController* KilledPC = Cast<AShooterPlayerController>(GetController());
-        if(KillerPC && KilledPC)
+        
+        // at least one of them is player, should score death/kill by gamemode
+        if(KillerPC || KilledPC)
         {
-            AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
-            if(MyGameMode)
+            if(KillerPC && KilledPC)
             {
-                MyGameMode->Killed(KillerPC, KilledPC);
+                AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+                if(MyGameMode)
+                {
+                    MyGameMode->Killed(KillerPC, KilledPC);
+                }
+            }
+            else if(KilledPC)
+            {
+                AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+                if(MyGameMode)
+                {
+                    MyGameMode->KillByAI(KilledPC);
+                }
+            }
+            else
+            {
+                AShooterGameMode* MyGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+                if(MyGameMode)
+                {
+                    MyGameMode->KillAI(KillerPC);
+                }
             }
         }
         

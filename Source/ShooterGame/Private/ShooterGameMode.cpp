@@ -142,4 +142,25 @@ void AShooterGameMode::Killed(AShooterPlayerController* KillerPC, AShooterPlayer
     }
 }
 
+void AShooterGameMode::KillByAI(AShooterPlayerController* KilledPC)
+{
+    AShooterPlayerState* KilledPlayerState = KilledPC?Cast<AShooterPlayerState>(KilledPC->PlayerState):NULL;
+    if(KilledPlayerState)
+    {
+        KilledPlayerState->ScoreDeath();
+        KilledPC->ClientNotifyKillByAI();
+        KilledPC->BeginDelayedRespawn(RespawnTime);
+    }
+}
+    
+void AShooterGameMode::KillAI(AShooterPlayerController* KillerPC)
+{
+    AShooterPlayerState* KillerPlayerState = KillerPC?Cast<AShooterPlayerState>(KillerPC->PlayerState):NULL;
+    if(KillerPlayerState)
+    {
+        KillerPlayerState->ScoreKill();
+        KilledPC->ClientNotifyKillAI();
+    }
+}
+
 

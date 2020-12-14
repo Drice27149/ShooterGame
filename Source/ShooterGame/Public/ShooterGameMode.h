@@ -32,7 +32,11 @@ public:
     virtual void StartPlay() override;
     
     void Killed(AShooterPlayerController* KillerPC, AShooterPlayerController* KilledPC);
-
+    
+    void KillByAI(AShooterPlayerController* KilledPC);
+    
+    void KillAI(AShooterPlayerController* KillerPC);
+    
     /** display remain time on UI/hud **/
     UFUNCTION(BlueprintCallable, Category = "Gameplay")
     int GetStateRemainTime();

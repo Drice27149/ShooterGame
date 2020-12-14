@@ -56,4 +56,10 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent)
     void OnMatchEnd();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnKillAI();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnKillByAI();
 };
