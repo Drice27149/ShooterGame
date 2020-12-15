@@ -240,6 +240,9 @@ protected:
     float RespawnTime;
 
     UFUNCTION(BlueprintImplementableEvent)
+    void ReportDamageEventToAI(AActor* OtherActor);
+
+    UFUNCTION(BlueprintImplementableEvent)
     void FireTest(int signal);
 
     UFUNCTION(BlueprintImplementableEvent)

@@ -417,6 +417,8 @@ void AShooterCharacter::PlayHit(AShooterCharacter* OtherCharacter, EHitType HitT
     Health -= HitDamage;
     // fix listen server issue
     OnRep_Health();
+    // in case of AI, report damage to trigger damage sensing
+    ReportDamageEventToAI(OtherCharacter);
     
     if(Health > 0)
     {

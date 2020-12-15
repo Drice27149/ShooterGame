@@ -330,3 +330,22 @@ todo:
 * get sense class from...
 * eqs can be use to find cover/road/hiding spot
 * report event is necessary
+* state basically is following:
+  * patrol
+  * investigate
+  * take cover
+  * alert & attack
+
+#### 2020.12.15
+
+* array base patrol
+
+* noise trigger investigate
+
+* damage trigger alert
+
+* alert will increase sight range, if succeed & have weapon trigger attack
+
+* else trigger find cover
+
+  

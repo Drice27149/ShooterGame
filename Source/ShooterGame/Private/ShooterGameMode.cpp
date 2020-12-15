@@ -159,7 +159,7 @@ void AShooterGameMode::KillAI(AShooterPlayerController* KillerPC)
     if(KillerPlayerState)
     {
         KillerPlayerState->ScoreKill();
-        KilledPC->ClientNotifyKillAI();
+        KillerPC->ClientNotifyKillAI();
     }
 }
 
