@@ -60,6 +60,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "StateMachine")
     int GetCurrentWeaponType();
     
+    UFUNCTION(BlueprintCallable)
+    bool CanFire();
+    
     float GetWalkSpeedMultiplier();
     
     float GetRunSpeedMultiplier();

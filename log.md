@@ -339,13 +339,139 @@ todo:
 #### 2020.12.15
 
 * array base patrol
-
 * noise trigger investigate
-
 * damage trigger alert
-
 * alert will increase sight range, if succeed & have weapon trigger attack
+* else trigger find cover 
 
-* else trigger find cover
+#### 2020.12.16
 
-  
+*  code style...
+*  investigate done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

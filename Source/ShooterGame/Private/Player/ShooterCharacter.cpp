@@ -77,6 +77,18 @@ float AShooterCharacter::GetRunSpeedMultiplier()
     return RunSpeedMultiplier;
 }
     
+bool AShooterCharacter::CanFire()
+{
+    if(CurrentWeapon)
+    {
+        return CurrentWeapon->CanFire();
+    }
+    else
+    {
+        return false;
+    }
+}
+    
 void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
@@ -556,7 +568,6 @@ void AShooterCharacter::UnequipWeaponMesh()
         LastEquipWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
         LastEquipWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->UnUsedSocket);
     }
-    
 }
 
 void AShooterCharacter::DropWeaponMesh()
