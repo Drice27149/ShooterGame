@@ -294,7 +294,7 @@ void AShooterCharacter::SwitchToNewWeapon(AWeapon* NewWeapon)
     }
     CurrentWeapon = NewWeapon;
     // set ownercharacter for local simulation
-    CurrentWeapon->SetOwnerCharacter(this)
+    CurrentWeapon->SetOwnerCharacter(this);
     CurrentWeapon->SimulateEquip();
     // notify HUD weapon change
     AShooterPlayerController* MyShooterPlayerController = Cast<AShooterPlayerController>(GetController());
